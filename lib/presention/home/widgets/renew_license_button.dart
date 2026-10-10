@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../utils/app_theme.dart';
+import 'renew_license_dialog.dart';
 
 class RenewLicenseButton extends StatelessWidget {
   const RenewLicenseButton({super.key});
@@ -20,13 +20,9 @@ class RenewLicenseButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            Get.snackbar(
-              'লাইসেন্স নবায়ন',
-              'আপনার লাইসেন্স নবায়ন পোর্টালে পুনঃনির্দেশ করা হচ্ছে...',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.renewText,
-              colorText: Colors.white,
-              margin: const EdgeInsets.all(16),
+            showDialog(
+              context: context,
+              builder: (context) => const RenewLicenseDialog(),
             );
           },
           child: const Row(
