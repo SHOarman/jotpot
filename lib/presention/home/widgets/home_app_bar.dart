@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/driver_provider.dart';
-import '../../../core/route/app_routes.dart';
 import '../../../utils/app_theme.dart';
+import 'register_driver_dialog.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
@@ -56,7 +55,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          onPressed: () => Get.toNamed(AppRoutes.REGISTER_DRIVER),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => const RegisterDriverDialog(),
+            );
+          },
           child: const Text(
             'ড্রাইভার হিসেবে নিবন্ধন করুন',
             style: TextStyle(
