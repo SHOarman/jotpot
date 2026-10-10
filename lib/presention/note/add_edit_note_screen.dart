@@ -158,7 +158,7 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
                           child: ChoiceChip(
                             label: Text(cat),
                             selected: isSelected,
-                            selectedColor: AppColors.primary.withOpacity(0.2),
+                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
                             labelStyle: TextStyle(
                               color: isSelected ? AppColors.primary : Colors.black87,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

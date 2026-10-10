@@ -100,10 +100,10 @@ class NoteDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: currentNote.cardColor.withOpacity(0.15),
+                        color: currentNote.cardColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: currentNote.cardColor.withOpacity(0.4)),
+                            color: currentNote.cardColor.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         currentNote.category,
