@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,20 +7,30 @@ import 'package:provider/provider.dart';
 import 'core/providers/driver_provider.dart';
 import 'core/route/app_pages.dart';
 import 'core/services/hive_service.dart';
+import 'firebase_options.dart';
 import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive database for Jotpot Vehicle Directory
-  await HiveService.init();
+  // Initialize Firebase for Cloud Firestore real data
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
+
+  // Initialize Hive database for local caching
+  try {
+    await HiveService.init();
+  } catch (e) {
+    debugPrint('Hive init error: $e');
+  }
 
   runApp(
-    // DevicePreview(
-    //   enabled: !kReleaseMode,
-    //   builder: (context) => const MyApp(),
-    // ),
-    MyApp(),
+    const MyApp(),
   );
 }
 

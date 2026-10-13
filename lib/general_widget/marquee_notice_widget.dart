@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 
 class MarqueeNoticeWidget extends StatefulWidget {
@@ -33,16 +35,38 @@ class _MarqueeNoticeWidgetState extends State<MarqueeNoticeWidget>
     super.dispose();
   }
 
+  void _callNoticeNumber() {
+    final match = RegExp(r'01\d{9}').firstMatch(widget.text);
+    if (match != null) {
+      final phone = match.group(0)!;
+      final uri = Uri(scheme: 'tel', path: phone);
+      try {
+        if (kIsWeb) {
+          launchUrl(uri, webOnlyWindowName: '_self');
+        } else {
+          launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {
+        try {
+          launchUrl(uri);
+        } catch (_) {}
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.noticeRed, // Bright red matching screenshot
-        borderRadius: BorderRadius.circular(8), // Exact 8px radius
-      ),
-      child: Row(
+    return InkWell(
+      onTap: _callNoticeNumber,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.noticeRed, // Bright red matching screenshot
+          borderRadius: BorderRadius.circular(8), // Exact 8px radius
+        ),
+        child: Row(
         children: [
           // Fixed Dark Red NOTICE Badge
           Container(
@@ -98,6 +122,7 @@ class _MarqueeNoticeWidgetState extends State<MarqueeNoticeWidget>
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
+import '../services/firebase_service.dart';
 import '../services/hive_service.dart';
 
 class DriverProvider extends ChangeNotifier {
@@ -22,8 +24,58 @@ class DriverProvider extends ChangeNotifier {
   // Notice Text
   String _noticeText = 'যেকোনো প্রয়োজন বা সহায়তার জন্য কল করুন: 01677234252';
 
+  StreamSubscription? _driverSubscription;
+  StreamSubscription? _settingsSubscription;
+
   DriverProvider() {
     loadDrivers();
+    _initFirestore();
+  }
+
+  void _initFirestore() {
+    _isLoading = true;
+    notifyListeners();
+
+    // 1. Listen to Real-time Firestore Active Drivers
+    _driverSubscription = FirebaseService.streamActiveDrivers().listen(
+      (firestoreDrivers) {
+        _drivers = firestoreDrivers;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (err) {
+        debugPrint('Firestore drivers sync error: $err');
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+
+    // 2. Listen to Real-time Settings (Live Banner / Notice)
+    _settingsSubscription = FirebaseService.listenGlobalSettings().listen(
+      (doc) {
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null) {
+            final liveText = data['liveBannerText']?.toString();
+            final showBanner = data['showLiveBanner'] == true;
+            if (showBanner && liveText != null && liveText.isNotEmpty) {
+              _noticeText = liveText;
+              notifyListeners();
+            }
+          }
+        }
+      },
+      onError: (err) {
+        debugPrint('Firestore settings sync error: $err');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _driverSubscription?.cancel();
+    _settingsSubscription?.cancel();
+    super.dispose();
   }
 
   // Getters
@@ -334,7 +386,7 @@ class DriverProvider extends ChangeNotifier {
     }).toList();
   }
 
-  /// Load drivers from Hive
+  /// Load drivers (empty until Firestore emits real data)
   Future<void> loadDrivers() async {
     _isLoading = true;
     notifyListeners();
@@ -349,8 +401,22 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  /// Add new driver
+  /// Add new driver (Firestore + Hive)
   Future<void> addDriver(DriverModel driver) async {
+    try {
+      await FirebaseService.registerDriver(
+        name: driver.name,
+        phone: driver.phone,
+        vehicleType: driver.vehicleType,
+        division: driver.division,
+        district: driver.district,
+        upazila: driver.upazila,
+        union: driver.union,
+        ward: driver.ward,
+      );
+    } catch (e) {
+      debugPrint('Firestore registerDriver error: $e');
+    }
     await HiveService.addDriver(driver);
     await loadDrivers();
   }

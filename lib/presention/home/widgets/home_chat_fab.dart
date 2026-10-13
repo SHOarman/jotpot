@@ -1,9 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../utils/app_theme.dart';
 
 class HomeChatFab extends StatelessWidget {
   const HomeChatFab({super.key});
+
+  Future<void> _callSupport() async {
+    final uri = Uri(scheme: 'tel', path: '01677234252');
+    try {
+      if (kIsWeb) {
+        await launchUrl(uri, webOnlyWindowName: '_self');
+      } else {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      try {
+        await launchUrl(uri);
+      } catch (_) {}
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,16 +27,7 @@ class HomeChatFab extends StatelessWidget {
       backgroundColor: AppColors.primaryOrange,
       shape: const CircleBorder(),
       elevation: 4,
-      onPressed: () {
-        Get.snackbar(
-          'সাপোর্ট ও সহায়তা',
-          'সহায়তার জন্য কল করুন: 01677234297',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.primaryOrange,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-        );
-      },
+      onPressed: _callSupport,
       child: const Icon(
         Icons.chat_bubble_outline_rounded,
         color: Colors.white,

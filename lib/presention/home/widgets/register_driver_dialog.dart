@@ -1,7 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/models/driver_model.dart';
 import '../../../core/providers/driver_provider.dart';
+import '../../../core/services/firebase_service.dart';
 import '../../../utils/app_theme.dart';
 
 class RegisterDriverDialog extends StatefulWidget {
@@ -41,7 +42,9 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     super.dispose();
   }
 
-  void _submitForm() {
+  bool _isSubmitting = false;
+
+  void _submitForm() async {
     setState(() => _validationError = null);
 
     if (_formKey.currentState!.validate()) {
@@ -54,44 +57,42 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         return;
       }
 
-      final newDriver = DriverModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        vehicleType: _selectedVehicle!,
-        division: _selectedDivision ?? 'ঢাকা',
-        district: _selectedDistrict ?? _selectedDivision ?? 'ঢাকা',
-        upazila: _selectedUpazila ?? '',
-        union: _unionController.text.trim(),
-        ward: _wardController.text.trim(),
-        address: [
-          if (_unionController.text.trim().isNotEmpty)
-            _unionController.text.trim(),
-          if (_selectedUpazila != null && _selectedUpazila!.isNotEmpty)
-            _selectedUpazila!,
-          if (_selectedDistrict != null && _selectedDistrict!.isNotEmpty)
-            _selectedDistrict!,
-        ].join(', '),
-        details: [
-          if (_modelController.text.trim().isNotEmpty)
-            'মডেল: ${_modelController.text.trim()}',
-          if (_registrationNoController.text.trim().isNotEmpty)
-            'রেজিস্ট্রেশন: ${_registrationNoController.text.trim()}',
-        ].join(' | '),
-      );
+      setState(() => _isSubmitting = true);
 
-      final provider = Provider.of<DriverProvider>(context, listen: false);
-      provider.addDriver(newDriver);
+      try {
+        await FirebaseService.registerDriver(
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          vehicleType: _selectedVehicle!,
+          vehicleModel: _modelController.text.trim(),
+          vehicleRegNumber: _registrationNoController.text.trim(),
+          division: _selectedDivision ?? 'ঢাকা',
+          district: _selectedDistrict ?? _selectedDivision ?? 'ঢাকা',
+          upazila: _selectedUpazila ?? '',
+          union: _unionController.text.trim(),
+          ward: _wardController.text.trim(),
+          transactionId:
+              _autoPay ? 'AUTO-${DateTime.now().millisecondsSinceEpoch}' : '',
+        );
 
-      Navigator.of(context).pop();
+        if (!mounted) return;
+        Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ড্রাইভার হিসেবে সফলভাবে নিবন্ধন করা হয়েছে!'),
-          backgroundColor: Color(0xFF059669),
-          duration: Duration(seconds: 3),
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'ড্রাইভার হিসেবে সফলভাবে নিবন্ধন করা হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষমান।'),
+            backgroundColor: Color(0xFF059669),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _isSubmitting = false;
+          _validationError = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     }
   }
 
@@ -112,11 +113,13 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                 <String>[])
             : <String>[];
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ConstrainedBox(
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -460,14 +463,23 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: _submitForm,
-                            child: const Text(
-                              'নিবন্ধন করুন',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            onPressed: _isSubmitting ? null : _submitForm,
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'নিবন্ধন করুন',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -480,6 +492,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           ),
         ),
       ),
+    ),
     );
   }
 

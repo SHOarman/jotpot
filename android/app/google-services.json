@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "687027102274",
+    "project_id": "jotpot-d7e6b",
+    "storage_bucket": "jotpot-d7e6b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:687027102274:android:6b8f7c8cd9702ffe6083db",
+        "android_client_info": {
+          "package_name": "com.example.jotpot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "687027102274-7l47pbe8so1b6bpa1nm12olovab3ibof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQkvZUVkF5bf2cGcEO8qAxJNGqogy_ajQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "687027102274-7l47pbe8so1b6bpa1nm12olovab3ibof.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -44,22 +44,49 @@ class DriverModel {
     };
   }
 
-  factory DriverModel.fromMap(Map<dynamic, dynamic> map) {
+  factory DriverModel.fromMap(Map<dynamic, dynamic> map, {String? id}) {
+    final union = (map['union'] ?? '').toString();
+    final upazila = (map['upazila'] ?? '').toString();
+    final district = (map['district'] ?? '').toString();
+    final division = (map['division'] ?? '').toString();
+    final ward = (map['ward'] ?? '').toString();
+
+    String address = (map['address'] ?? '').toString();
+    if (address.isEmpty) {
+      address = [
+        if (union.isNotEmpty) union,
+        if (upazila.isNotEmpty) upazila,
+        if (district.isNotEmpty) district,
+        if (division.isNotEmpty) division,
+      ].join(', ');
+    }
+
+    String details = (map['details'] ?? '').toString();
+    if (details.isEmpty) {
+      final model = (map['vehicleModel'] ?? '').toString();
+      final reg = (map['vehicleRegNumber'] ?? '').toString();
+      details = [
+        if (model.isNotEmpty) 'মডেল: $model',
+        if (reg.isNotEmpty) 'রেজিস্ট্রেশন: $reg',
+      ].join(' | ');
+    }
+
+    final rawSeat =
+        map['seatCount'] ?? map['seatingCapacity'] ?? map['capacity'];
+
     return DriverModel(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      phone: map['phone'] ?? '',
-      vehicleType: map['vehicleType'] ?? 'Car',
-      division: map['division'] ?? '',
-      district: map['district'] ?? '',
-      upazila: map['upazila'] ?? '',
-      union: map['union'] ?? '',
-      ward: map['ward'] ?? '',
-      address: map['address'] ?? '',
-      details: map['details'] ?? '',
-      seatCount: map['seatCount'] != null
-          ? int.tryParse(map['seatCount'].toString())
-          : null,
+      id: id ?? (map['id'] ?? '').toString(),
+      name: (map['name'] ?? '').toString(),
+      phone: (map['phone'] ?? '').toString(),
+      vehicleType: (map['vehicleType'] ?? 'Car').toString(),
+      division: division,
+      district: district,
+      upazila: upazila,
+      union: union,
+      ward: ward,
+      address: address,
+      details: details,
+      seatCount: rawSeat != null ? int.tryParse(rawSeat.toString()) : null,
     );
   }
 }

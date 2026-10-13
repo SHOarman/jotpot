@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/driver_model.dart';
+import '../../../core/services/firebase_service.dart';
 import '../../../utils/app_theme.dart';
 
 class DriverCard extends StatelessWidget {
@@ -8,70 +10,38 @@ class DriverCard extends StatelessWidget {
 
   const DriverCard({super.key, required this.driver});
 
-  void _makeCall(BuildContext context) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.phone, color: AppColors.primaryOrange),
-            const SizedBox(width: 8),
-            Text(driver.name),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'গাড়ির ধরন: ${driver.vehicleType}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'মোবাইল: ${driver.phone}',
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.primaryOrange,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text('ঠিকানা: ${driver.address.isNotEmpty ? driver.address : "${driver.upazila}, ${driver.district}"}'),
-            if (driver.seatCount != null && driver.seatCount! > 0) ...[
-              const SizedBox(height: 6),
-              Text('আসন সংখ্যা: ${driver.seatCount}'),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('বন্ধ করুন', style: TextStyle(color: AppColors.textMuted)),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryOrange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.call, size: 18),
-            label: const Text('কল করুন'),
-            onPressed: () {
-              Get.back();
-              Get.snackbar(
-                'কল করা হচ্ছে',
-                'ডায়াল করা হচ্ছে: ${driver.phone}',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.primaryOrange,
-                colorText: Colors.white,
-                margin: const EdgeInsets.all(16),
-              );
-            },
-          ),
-        ],
-      ),
+  Future<void> _makeCall(BuildContext context) async {
+    // 1. Track call in Firestore Analytics
+    FirebaseService.trackCallClick(
+      driver.id,
+      driver.name,
+      driver.vehicleType,
     );
+
+    // 2. Direct call link using tel: scheme (no message, directly open dialer)
+    final cleanPhone = driver.phone.trim().replaceAll(RegExp(r'\s+'), '');
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: cleanPhone,
+    );
+
+    try {
+      if (kIsWeb) {
+        await launchUrl(launchUri, webOnlyWindowName: '_self');
+      } else {
+        final launched = await launchUrl(
+          launchUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched) {
+          await launchUrl(launchUri);
+        }
+      }
+    } catch (_) {
+      try {
+        await launchUrl(launchUri);
+      } catch (_) {}
+    }
   }
 
   @override
@@ -191,12 +161,14 @@ class DriverCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'আসন সংখ্যা: ${driver.seatCount}',
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    color: AppColors.textBody,
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Text(
+                    'আসন সংখ্যা: ${driver.seatCount}',
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textBody,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

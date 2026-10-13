@@ -58,6 +58,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () {
             showDialog(
               context: context,
+              barrierColor: Colors.black.withValues(alpha: 0.3),
               builder: (context) => const RegisterDriverDialog(),
             );
           },

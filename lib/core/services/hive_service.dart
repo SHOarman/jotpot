@@ -11,75 +11,8 @@ class HiveService {
     await Hive.initFlutter();
     _box = await Hive.openBox(_boxName);
     
-    // Seed mock initial data if empty
-    if (_box!.isEmpty) {
-      await _seedMockData();
-    }
-  }
-
-  static Future<void> _seedMockData() async {
-    final mockDrivers = [
-      DriverModel(
-        id: '1',
-        name: 'new',
-        phone: '01677234297',
-        vehicleType: 'Bus',
-        division: 'ঢাকা',
-        district: 'ঢাকা',
-        upazila: 'ধামরাই',
-        union: 'ধামরাই পৌরসভা',
-        ward: 'ওয়ার্ড ১',
-        address: 'abc, ধামরাই, ঢাকা',
-        details: 'ijwirw',
-        seatCount: 25,
-      ),
-      DriverModel(
-        id: '2',
-        name: 'Doyal',
-        phone: '01712345678',
-        vehicleType: 'Private প্রাইভেট কার',
-        division: 'ঢাকা',
-        district: 'টাঙ্গাইল',
-        upazila: 'টাঙ্গাইল সদর',
-        union: 'বাঘিল ইউনিয়ন',
-        ward: 'ওয়ার্ড ২',
-        address: 'Baghil, টাঙ্গাইল সদর, টাঙ্গাইল',
-        details: 'allion 2004',
-      ),
-      DriverModel(
-        id: '3',
-        name: 'আলমগীর হোসেন',
-        phone: '01711223344',
-        vehicleType: 'Car',
-        division: 'ঢাকা',
-        district: 'গাজীপুর',
-        upazila: 'টঙ্গী',
-        union: 'টঙ্গী পৌরসভা',
-        ward: 'ওয়ার্ড ৩',
-        address: 'স্টেশন রোড, টঙ্গী, গাজীপুর',
-        details: '১৫ বছর অভিজ্ঞ চালক, এসি কার সার্ভিস',
-        seatCount: 4,
-      ),
-      DriverModel(
-        id: '4',
-        name: 'মাসুদ রানা',
-        phone: '01912345678',
-        vehicleType: 'Ambulance',
-        division: 'ঢাকা',
-        district: 'ঢাকা',
-        upazila: 'সাভার',
-        union: 'সাভার পৌরসভা',
-        ward: 'ওয়ার্ড ৫',
-        address: 'সাভার বাসস্ট্যান্ড, ঢাকা',
-        details: '২৪ ঘণ্টা জরুরী এম্বুলেন্স সেবা',
-        seatCount: 2,
-      ),
-    ];
-
-    for (var driver in mockDrivers) {
-      await _box!.put(driver.id, driver.toMap());
-    }
-
+    // Clear any previous mock/dummy data so only real Firestore data exists
+    await _box!.clear();
   }
 
   /// Get all drivers stored in Hive
