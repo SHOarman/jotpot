@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class FilterDropdown extends StatelessWidget {
@@ -66,8 +67,11 @@ class FilterDropdown extends StatelessWidget {
                       DropdownMenuItem<String>(
                         value: null,
                         child: Text(
-                          'সকল $label',
-                          style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+                          AppStrings.of(context).isBn
+                              ? 'সকল $label'
+                              : 'All $label',
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.textDark),
                         ),
                       ),
                       ...items.map((item) {

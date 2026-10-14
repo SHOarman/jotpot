@@ -117,15 +117,101 @@ class FirebaseService {
   }
 
   /// Submit driver license renewal request
-  static Future<void> submitRenewal({
+  /// Search driver in Firestore by phone number
+  static Future<DriverModel?> searchDriverByPhone(String phone) async {
+    final cleanPhone = phone.trim();
+    if (cleanPhone.isEmpty) return null;
+
+    try {
+      // 1. Direct match
+      var snap = await _db
+          .collection('drivers')
+          .where('phone', isEqualTo: cleanPhone)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        final doc = snap.docs.first;
+        return DriverModel.fromMap(doc.data(), id: doc.id);
+      }
+
+      // 2. Fallback check with/without leading 0
+      String altPhone = cleanPhone;
+      if (cleanPhone.startsWith('0')) {
+        altPhone = cleanPhone.substring(1);
+      } else {
+        altPhone = '0$cleanPhone';
+      }
+
+      snap = await _db
+          .collection('drivers')
+          .where('phone', isEqualTo: altPhone)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        final doc = snap.docs.first;
+        return DriverModel.fromMap(doc.data(), id: doc.id);
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('searchDriverByPhone error: $e');
+    }
+    return null;
+  }
+
+  /// Fetch all vehicle types from Firestore
+  static Future<List<Map<String, dynamic>>> fetchVehicleTypes() async {
+    try {
+      final snap = await _db.collection('vehicleTypes').get();
+      return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Stream vehicle types from Firestore
+  static Stream<List<Map<String, dynamic>>> streamVehicleTypes() {
+    return _db.collection('vehicleTypes').snapshots().map((snap) {
+      return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+    });
+  }
+
+  /// Calculate renewal amount with vehicle discount & package duration discount
+  static int calculateRenewalAmount({
+    required num monthlyFee,
+    required int durationDays, // 30, 90, 180, 365
+    num vehicleDiscount = 0,
+    String discountType = 'percentage',
+    num durationDiscount = 0, // discount3Months, discount6Months, discount1Year
+  }) {
+    double rawBase = (monthlyFee / 30) * durationDays;
+    double discountedBase = rawBase;
+    // ভেহিক্যাল ডিসকাউন্ট
+    if (vehicleDiscount > 0) {
+      if (discountType == 'percentage') {
+        discountedBase = discountedBase * (1 - vehicleDiscount / 100);
+      } else {
+        discountedBase = (discountedBase - (vehicleDiscount / 30 * durationDays))
+            .clamp(0.0, double.infinity);
+      }
+    }
+    // মেয়াদের ডিসকাউন্ট (৩ মাস, ৬ মাস, ১ বছর)
+    double finalAmount = discountedBase * (1 - durationDiscount / 100);
+    return finalAmount.round();
+  }
+
+  /// Submit driver license renewal request to Admin Dashboard
+  static Future<void> submitRenewalToAdmin({
     required String driverId,
     required String driverName,
     required String driverPhone,
     required String transactionId,
     required int durationDays,
     required num amount,
+    bool autoPay = false,
   }) async {
-    // 1. Create payment request
+    // 1. Payments কালেকশনে জমা হবে (অ্যাডমিন প্যানেলের Subscription Payments ট্যাবে দেখাবে)
     await _db.collection('payments').add({
       'driverId': driverId,
       'driverName': driverName,
@@ -133,11 +219,20 @@ class FirebaseService {
       'amount': amount,
       'durationDays': durationDays,
       'transactionId': transactionId.trim(),
-      'status': 'pending',
+      'status': 'pending', // অ্যাডমিন পেন্ডিং হিসেবে দেখবে
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // 2. Send renewal notification to admin
+    if (autoPay) {
+      try {
+        await _db.collection('drivers').doc(driverId).update({
+          'autoPay': true,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } catch (_) {}
+    }
+
+    // ২. Admin Notification কালেকশনে পাঠানো হবে (অ্যাডমিনের বেল আইকনে লাল ব্যাজ শো করবে)
     await _db.collection('notifications').add({
       'type': 'renewal',
       'driverId': driverId,
@@ -148,6 +243,26 @@ class FirebaseService {
       'readBy': [],
     });
   }
+
+  /// Alias for backward compatibility
+  static Future<void> submitRenewal({
+    required String driverId,
+    required String driverName,
+    required String driverPhone,
+    required String transactionId,
+    required int durationDays,
+    required num amount,
+    bool autoPay = false,
+  }) =>
+      submitRenewalToAdmin(
+        driverId: driverId,
+        driverName: driverName,
+        driverPhone: driverPhone,
+        transactionId: transactionId,
+        durationDays: durationDays,
+        amount: amount,
+        autoPay: autoPay,
+      );
 
   /// Track phone call button click for Admin Dashboard analytics
   static Future<void> trackCallClick(

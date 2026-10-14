@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 
 class DashedBorderPainter extends CustomPainter {
   final Color color;
@@ -73,6 +74,8 @@ class EmptyDriverWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 180),
@@ -89,13 +92,14 @@ class EmptyDriverWidget extends StatelessWidget {
           dashSpace: 5.0,
           borderRadius: 12.0,
         ),
-        child: const Center(
+        child: Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 60.0, horizontal: 24.0),
+            padding:
+                const EdgeInsets.symmetric(vertical: 60.0, horizontal: 24.0),
             child: Text(
-              'এই এলাকায় কোনো ড্রাইভার পাওয়া যায়নি।',
+              strings.noDriversFound,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.normal,

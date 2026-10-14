@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/route/app_routes.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class HomeFooterWidget extends StatelessWidget {
@@ -8,6 +9,8 @@ class HomeFooterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWeb = constraints.maxWidth > 768;
@@ -63,9 +66,9 @@ class HomeFooterWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Your trusted directory for finding reliable drivers in your area.',
-                            style: TextStyle(
+                          Text(
+                            strings.footerAboutText,
+                            style: const TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 14,
                               height: 1.4,
@@ -82,9 +85,9 @@ class HomeFooterWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Contact Us',
-                            style: TextStyle(
+                          Text(
+                            strings.footerHelplineTitle,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
@@ -92,18 +95,21 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Phone: 01677234297',
-                            style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                            'Phone: 01677234252',
+                            style: TextStyle(
+                                color: AppColors.textBody, fontSize: 14),
                           ),
                           const SizedBox(height: 6),
                           const Text(
                             'Email: support@jotpot.com',
-                            style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                            style: TextStyle(
+                                color: AppColors.textBody, fontSize: 14),
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'Address: Aftab Nagar, Dhaka',
-                            style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                            'Address: Tangail / Dhaka, Bangladesh',
+                            style: TextStyle(
+                                color: AppColors.textBody, fontSize: 14),
                           ),
                         ],
                       ),
@@ -116,9 +122,9 @@ class HomeFooterWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Quick Links',
-                            style: TextStyle(
+                          Text(
+                            strings.footerQuickLinks,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
@@ -126,21 +132,25 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           GestureDetector(
-                            onTap: () => Get.toNamed(AppRoutes.REGISTER_DRIVER),
-                            child: const Text(
-                              'Register as Driver',
-                              style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                            onTap: () =>
+                                Get.toNamed(AppRoutes.REGISTER_DRIVER),
+                            child: Text(
+                              strings.registerAsDriver,
+                              style: const TextStyle(
+                                  color: AppColors.textBody, fontSize: 14),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Admin Login',
-                            style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                          Text(
+                            strings.footerRenew,
+                            style: const TextStyle(
+                                color: AppColors.textBody, fontSize: 14),
                           ),
                           const SizedBox(height: 8),
                           const Text(
                             'Privacy Policy',
-                            style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                            style: TextStyle(
+                                color: AppColors.textBody, fontSize: 14),
                           ),
                         ],
                       ),
@@ -174,18 +184,18 @@ class HomeFooterWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Your trusted directory for finding reliable drivers in your area.',
-                  style: TextStyle(
+                Text(
+                  strings.footerAboutText,
+                  style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 14,
                     height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Contact Us',
-                  style: TextStyle(
+                Text(
+                  strings.footerHelplineTitle,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
@@ -193,7 +203,7 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Phone: 01677234297',
+                  'Phone: 01677234252',
                   style: TextStyle(color: AppColors.textBody, fontSize: 14),
                 ),
                 const SizedBox(height: 6),
@@ -203,13 +213,13 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Address: Aftab Nagar, Dhaka',
+                  'Address: Tangail / Dhaka, Bangladesh',
                   style: TextStyle(color: AppColors.textBody, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Quick Links',
-                  style: TextStyle(
+                Text(
+                  strings.footerQuickLinks,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
@@ -218,15 +228,16 @@ class HomeFooterWidget extends StatelessWidget {
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () => Get.toNamed(AppRoutes.REGISTER_DRIVER),
-                  child: const Text(
-                    'Register as Driver',
-                    style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                  child: Text(
+                    strings.registerAsDriver,
+                    style:
+                        const TextStyle(color: AppColors.textBody, fontSize: 14),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Admin Login',
-                  style: TextStyle(color: AppColors.textBody, fontSize: 14),
+                Text(
+                  strings.footerRenew,
+                  style: const TextStyle(color: AppColors.textBody, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -238,10 +249,10 @@ class HomeFooterWidget extends StatelessWidget {
               const SizedBox(height: 36),
 
               // Copyright (always centered)
-              const Center(
+              Center(
                 child: Text(
-                  '© 2026 JOTPOT. All rights reserved.',
-                  style: TextStyle(
+                  strings.footerCopyright,
+                  style: const TextStyle(
                     color: AppColors.textHint,
                     fontSize: 13,
                   ),

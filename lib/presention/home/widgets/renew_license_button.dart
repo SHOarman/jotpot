@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 import 'renew_license_dialog.dart';
 
@@ -7,6 +8,8 @@ class RenewLicenseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
     return Container(
       width: double.infinity,
       height: 48,
@@ -26,19 +29,19 @@ class RenewLicenseButton extends StatelessWidget {
               builder: (context) => const RenewLicenseDialog(),
             );
           },
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.refresh_rounded,
                 color: AppColors.renewText,
                 size: 20,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'Renew License',
-                style: TextStyle(
-                  fontSize: 16,
+                strings.renewLicenseBtn,
+                style: const TextStyle(
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: AppColors.renewText,
                 ),

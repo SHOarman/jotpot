@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class HomeSearchBar extends StatelessWidget {
@@ -11,6 +12,8 @@ class HomeSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -35,19 +38,19 @@ class HomeSearchBar extends StatelessWidget {
       ),
       child: TextField(
         onChanged: onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Search for Union, Ward or Upazila...',
-          hintStyle: TextStyle(
+        decoration: InputDecoration(
+          hintText: strings.searchPlaceholder,
+          hintStyle: const TextStyle(
             color: AppColors.textHint,
             fontSize: 14,
           ),
-          prefixIcon: Icon(
+          prefixIcon: const Icon(
             Icons.search,
             color: AppColors.textHint,
             size: 22,
           ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );

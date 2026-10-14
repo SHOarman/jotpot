@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class HeroHeaderWidget extends StatelessWidget {
@@ -6,31 +7,33 @@ class HeroHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final strings = AppStrings.of(context);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ঝটপট',
-          style: TextStyle(
+          strings.appTitle,
+          style: const TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.w900,
             color: AppColors.textDark,
             height: 1.1,
           ),
         ),
-        SizedBox(height: 2),
+        const SizedBox(height: 2),
         Text(
-          '- ভাড়ায় চালিত গাড়ির ডিরেক্টরি',
-          style: TextStyle(
+          strings.appSubtitle,
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: AppColors.primaryOrange,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
-          'আপনার এলাকার বিশ্বস্ত ড্রাইভার খুঁজে পেতে নিচের ফিল্টারগুলো ব্যবহার করুন।',
-          style: TextStyle(
+          strings.heroDescription,
+          style: const TextStyle(
             fontSize: 14,
             color: AppColors.textBody,
             height: 1.4,

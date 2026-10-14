@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
+import '../models/global_settings_model.dart';
+import '../models/vehicle_type_model.dart';
 import '../services/firebase_service.dart';
 import '../services/hive_service.dart';
+import '../../utils/app_strings.dart';
 
 class DriverProvider extends ChangeNotifier {
   List<DriverModel> _drivers = [];
@@ -21,11 +24,14 @@ class DriverProvider extends ChangeNotifier {
   bool _isBengali = true;
   bool _isUnityMode = false; // Home Mode vs Unity Mode
 
-  // Notice Text
+  // Notice Text & Global Settings
   String _noticeText = 'যেকোনো প্রয়োজন বা সহায়তার জন্য কল করুন: 01677234252';
+  GlobalSettingsModel _globalSettings = GlobalSettingsModel();
+  List<VehicleTypeModel> _vehicleTypeModels = [];
 
   StreamSubscription? _driverSubscription;
   StreamSubscription? _settingsSubscription;
+  StreamSubscription? _vehicleTypesSubscription;
 
   DriverProvider() {
     loadDrivers();
@@ -50,23 +56,36 @@ class DriverProvider extends ChangeNotifier {
       },
     );
 
-    // 2. Listen to Real-time Settings (Live Banner / Notice)
+    // 2. Listen to Real-time Settings (Payment instructions, automated payments, discounts, live banner)
     _settingsSubscription = FirebaseService.listenGlobalSettings().listen(
       (doc) {
         if (doc.exists) {
           final data = doc.data();
           if (data != null) {
+            _globalSettings = GlobalSettingsModel.fromMap(data);
             final liveText = data['liveBannerText']?.toString();
             final showBanner = data['showLiveBanner'] == true;
             if (showBanner && liveText != null && liveText.isNotEmpty) {
               _noticeText = liveText;
-              notifyListeners();
             }
+            notifyListeners();
           }
         }
       },
       onError: (err) {
         debugPrint('Firestore settings sync error: $err');
+      },
+    );
+
+    // 3. Listen to Real-time Vehicle Types (Monthly fee, discounts)
+    _vehicleTypesSubscription = FirebaseService.streamVehicleTypes().listen(
+      (list) {
+        _vehicleTypeModels =
+            list.map((m) => VehicleTypeModel.fromMap(m)).toList();
+        notifyListeners();
+      },
+      onError: (err) {
+        debugPrint('Firestore vehicleTypes sync error: $err');
       },
     );
   }
@@ -75,6 +94,7 @@ class DriverProvider extends ChangeNotifier {
   void dispose() {
     _driverSubscription?.cancel();
     _settingsSubscription?.cancel();
+    _vehicleTypesSubscription?.cancel();
     super.dispose();
   }
 
@@ -91,12 +111,14 @@ class DriverProvider extends ChangeNotifier {
   bool get isBengali => _isBengali;
   bool get isUnityMode => _isUnityMode;
   String get noticeText => _noticeText;
+  GlobalSettingsModel get globalSettings => _globalSettings;
+  List<VehicleTypeModel> get vehicleTypeModels => _vehicleTypeModels;
 
   // Bangladesh Division -> District -> Upazila Geographic Mapping
   static const Map<String, Map<String, List<String>>> geoHierarchy = {
     'বরিশাল': {
       'ভোলা': [
-        'Burhanuddin',
+        'বোরহানউদ্দিন',
         'ভোলা সদর',
         'দৌলতখান',
         'লালমোহন',
@@ -295,31 +317,77 @@ class DriverProvider extends ChangeNotifier {
     },
   };
 
-  // Preset Filter Options
-  List<String> get vehicleTypes => [
-        'Bus',
-        'Car',
-        'Microbus',
-        'CNG',
-        'Truck',
-        'Ambulance',
-        'Bike',
-        'Pickup',
-      ];
+  // Preset Filter Options: Dynamic translation based on current language
+  List<String> get vehicleTypes {
+    final rawList = _vehicleTypeModels.isNotEmpty
+        ? _vehicleTypeModels.map((v) => v.name).toList()
+        : [
+            'Bus',
+            'Car',
+            'Microbus',
+            'CNG',
+            'Truck',
+            'Ambulance',
+            'Bike',
+            'Pickup',
+          ];
+    return rawList
+        .map((vt) => AppStrings.translateVehicleTypeStatic(vt, _isBengali))
+        .toSet()
+        .toList();
+  }
 
-  // All divisions
-  List<String> get divisions => geoHierarchy.keys.toList();
+  // All divisions translated dynamically
+  List<String> get divisions {
+    final bnDivisions = geoHierarchy.keys.toList();
+    if (_isBengali) {
+      return bnDivisions;
+    } else {
+      return bnDivisions
+          .map((d) => AppStrings.translateDivisionStatic(d, false))
+          .toList();
+    }
+  }
 
   // Cascading districts: Only shown if division is selected
   List<String> get districts {
     if (_selectedDivision == null) return [];
-    return geoHierarchy[_selectedDivision]?.keys.toList() ?? [];
+    return getDistrictsForDivision(_selectedDivision!);
   }
 
   // Cascading upazilas: Only shown if district is selected
   List<String> get upazilas {
     if (_selectedDivision == null || _selectedDistrict == null) return [];
-    return geoHierarchy[_selectedDivision]?[_selectedDistrict] ?? [];
+    return getUpazilasForDistrict(_selectedDivision!, _selectedDistrict!);
+  }
+
+  // Helper for Cascading Districts (Used by Filter Section & Registration Dialog)
+  List<String> getDistrictsForDivision(String division) {
+    final bnDivision = AppStrings.toBengaliDivision(division);
+    final rawDistricts = geoHierarchy[bnDivision]?.keys.toList() ?? [];
+    if (_isBengali) {
+      return rawDistricts;
+    } else {
+      return rawDistricts
+          .map((d) => AppStrings.translateDistrictStatic(d, false))
+          .toList();
+    }
+  }
+
+  // Helper for Cascading Upazilas (Used by Filter Section & Registration Dialog)
+  List<String> getUpazilasForDistrict(String division, String district) {
+    final bnDivision = AppStrings.toBengaliDivision(division);
+    final bnDistrict = AppStrings.toBengaliDistrict(district);
+    final rawUpazilas = geoHierarchy[bnDivision]?[bnDistrict] ?? [];
+    if (_isBengali) {
+      return rawUpazilas
+          .map((u) => AppStrings.translateUpazilaStatic(u, true))
+          .toList();
+    } else {
+      return rawUpazilas
+          .map((u) => AppStrings.translateUpazilaStatic(u, false))
+          .toList();
+    }
   }
 
   // Predefined lists for registration screen dropdowns
@@ -352,19 +420,42 @@ class DriverProvider extends ChangeNotifier {
           driver.address.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           driver.upazila.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           driver.union.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          driver.ward.toLowerCase().contains(_searchQuery.toLowerCase());
+          driver.ward.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateDivisionStatic(driver.division, true)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateDivisionStatic(driver.division, false)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateDistrictStatic(driver.district, true)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateDistrictStatic(driver.district, false)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateUpazilaStatic(driver.upazila, true)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          AppStrings.translateUpazilaStatic(driver.upazila, false)
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase());
 
       final matchesVehicle = _selectedVehicleType == null ||
-          driver.vehicleType == _selectedVehicleType;
+          driver.vehicleType == _selectedVehicleType ||
+          AppStrings.areSameVehicleType(
+              driver.vehicleType, _selectedVehicleType!);
 
-      final matchesDivision =
-          _selectedDivision == null || driver.division == _selectedDivision;
+      final matchesDivision = _selectedDivision == null ||
+          driver.division == _selectedDivision ||
+          AppStrings.areSameDivision(driver.division, _selectedDivision!);
 
-      final matchesDistrict =
-          _selectedDistrict == null || driver.district == _selectedDistrict;
+      final matchesDistrict = _selectedDistrict == null ||
+          driver.district == _selectedDistrict ||
+          AppStrings.areSameDistrict(driver.district, _selectedDistrict!);
 
-      final matchesUpazila =
-          _selectedUpazila == null || driver.upazila == _selectedUpazila;
+      final matchesUpazila = _selectedUpazila == null ||
+          driver.upazila == _selectedUpazila ||
+          AppStrings.areSameUpazila(driver.upazila, _selectedUpazila!);
 
       final matchesUnion = _selectedUnion == null ||
           _selectedUnion!.trim().isEmpty ||
@@ -479,6 +570,23 @@ class DriverProvider extends ChangeNotifier {
 
   void toggleLanguage() {
     _isBengali = !_isBengali;
+    // Seamlessly translate currently selected filters to the newly selected language
+    if (_selectedDivision != null) {
+      _selectedDivision =
+          AppStrings.translateDivisionStatic(_selectedDivision!, _isBengali);
+    }
+    if (_selectedDistrict != null) {
+      _selectedDistrict =
+          AppStrings.translateDistrictStatic(_selectedDistrict!, _isBengali);
+    }
+    if (_selectedUpazila != null) {
+      _selectedUpazila =
+          AppStrings.translateUpazilaStatic(_selectedUpazila!, _isBengali);
+    }
+    if (_selectedVehicleType != null) {
+      _selectedVehicleType = AppStrings.translateVehicleTypeStatic(
+          _selectedVehicleType!, _isBengali);
+    }
     notifyListeners();
   }
 

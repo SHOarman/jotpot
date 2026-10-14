@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class CategoryChip extends StatelessWidget {
@@ -38,7 +39,7 @@ class CategoryChip extends StatelessWidget {
               : null,
         ),
         child: Text(
-          label,
+          AppStrings.of(context).vehicleCategoryName(label),
           style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textDark,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

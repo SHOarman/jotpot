@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/driver_provider.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class RegisterDriverDialog extends StatefulWidget {
@@ -28,7 +29,6 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   String? _selectedDivision;
   String? _selectedDistrict;
   String? _selectedUpazila;
-  bool _autoPay = false;
   String? _validationError;
 
   @override
@@ -44,16 +44,16 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
 
   bool _isSubmitting = false;
 
-  void _submitForm() async {
+  void _submitForm(AppStrings strings) async {
     setState(() => _validationError = null);
 
     if (_formKey.currentState!.validate()) {
       if (_selectedVehicle == null) {
-        setState(() => _validationError = 'অনুগ্রহ করে গাড়ির ধরন নির্বাচন করুন');
+        setState(() => _validationError = strings.vehicleTypeRequired);
         return;
       }
       if (_selectedDivision == null) {
-        setState(() => _validationError = 'অনুগ্রহ করে বিভাগ নির্বাচন করুন');
+        setState(() => _validationError = strings.divisionRequired);
         return;
       }
 
@@ -71,19 +71,17 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           upazila: _selectedUpazila ?? '',
           union: _unionController.text.trim(),
           ward: _wardController.text.trim(),
-          transactionId:
-              _autoPay ? 'AUTO-${DateTime.now().millisecondsSinceEpoch}' : '',
+          transactionId: '',
         );
 
         if (!mounted) return;
         Navigator.of(context).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'ড্রাইভার হিসেবে সফলভাবে নিবন্ধন করা হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষমান।'),
-            backgroundColor: Color(0xFF059669),
-            duration: Duration(seconds: 4),
+          SnackBar(
+            content: Text(strings.regSuccessSnackbar),
+            backgroundColor: const Color(0xFF059669),
+            duration: const Duration(seconds: 4),
           ),
         );
       } catch (e) {
@@ -99,18 +97,18 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DriverProvider>(context);
+    final strings = AppStrings.of(context);
 
     // Cascading district options based on selected division
     final List<String> availableDistricts = _selectedDivision != null
-        ? (DriverProvider.geoHierarchy[_selectedDivision]?.keys.toList() ??
-            <String>[])
+        ? provider.getDistrictsForDivision(_selectedDivision!)
         : <String>[];
 
     // Cascading upazila options based on selected district
     final List<String> availableUpazilas =
         (_selectedDivision != null && _selectedDistrict != null)
-            ? (DriverProvider.geoHierarchy[_selectedDivision]?[_selectedDistrict] ??
-                <String>[])
+            ? provider.getUpazilasForDistrict(
+                _selectedDivision!, _selectedDistrict!)
             : <String>[];
 
     return BackdropFilter(
@@ -120,379 +118,332 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         backgroundColor: Colors.white,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dialog Header: Title & Close Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'ড্রাইভার নিবন্ধন',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Dialog Header: Title & Close Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            strings.regDialogTitle,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'আমাদের ডিরেক্টরিতে যোগ দিন এবং আরও কাস্টমার পান।',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Color(0xFF64748B),
+                          const SizedBox(height: 4),
+                          Text(
+                            strings.regDialogSubtitle,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF94A3B8),
-                      size: 22,
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 22,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              // Scrollable Form Body
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. পুরো নাম
-                        _buildFieldLabel('পুরো নাম'),
-                        const SizedBox(height: 6),
-                        _buildTextInput(
-                          controller: _nameController,
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'পুরো নাম লিখুন' : null,
-                        ),
-                        const SizedBox(height: 14),
-
-                        // 2. ফোন নম্বর
-                        _buildFieldLabel('ফোন নম্বর'),
-                        const SizedBox(height: 6),
-                        _buildTextInput(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'ফোন নম্বর লিখুন' : null,
-                        ),
-                        const SizedBox(height: 14),
-
-                        // 3. গাড়ির ধরন
-                        _buildFieldLabel('গাড়ির ধরন'),
-                        const SizedBox(height: 6),
-                        _buildDropdown(
-                          hint: 'গাড়ির ধরন নির্বাচন করুন',
-                          value: _selectedVehicle,
-                          items: provider.vehicleTypes,
-                          onChanged: (val) {
-                            setState(() => _selectedVehicle = val);
-                          },
-                        ),
-                        const SizedBox(height: 14),
-
-                        // 4. গাড়ির মডেল
-                        _buildFieldLabel('গাড়ির মডেল'),
-                        const SizedBox(height: 6),
-                        _buildTextInput(
-                          controller: _modelController,
-                        ),
-                        const SizedBox(height: 14),
-
-                        // 5. গাড়ির নিবন্ধন নম্বর
-                        _buildFieldLabel('গাড়ির নিবন্ধন নম্বর'),
-                        const SizedBox(height: 6),
-                        _buildTextInput(
-                          controller: _registrationNoController,
-                          hint: 'e.g. Dhaka Metro-Ga 12-3456',
-                        ),
-                        const SizedBox(height: 14),
-
-                        // 6. Auto Pay Checkbox Card
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                // Scrollable Form Body
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. পুরো নাম
+                          _buildFieldLabel(strings.driverName),
+                          const SizedBox(height: 6),
+                          _buildTextInput(
+                            controller: _nameController,
+                            hint: strings.driverNamePlaceholder,
+                            validator: (v) => v == null || v.isEmpty
+                                ? strings.driverNamePlaceholder
+                                : null,
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          const SizedBox(height: 14),
+
+                          // 2. ফোন নম্বর
+                          _buildFieldLabel(strings.mobileNumber),
+                          const SizedBox(height: 6),
+                          _buildTextInput(
+                            controller: _phoneController,
+                            hint: strings.phonePlaceholder,
+                            keyboardType: TextInputType.phone,
+                            validator: (v) => v == null || v.isEmpty
+                                ? strings.phonePlaceholder
+                                : null,
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() => _autoPay = !_autoPay);
+                          const SizedBox(height: 14),
+
+                          // 3. গাড়ির ধরন
+                          _buildFieldLabel(strings.filterVehicleType),
+                          const SizedBox(height: 6),
+                          _buildDropdown(
+                            hint: strings.selectVehicleType,
+                            value: _selectedVehicle,
+                            items: provider.vehicleTypes,
+                            onChanged: (val) {
+                              setState(() => _selectedVehicle = val);
                             },
-                            child: Row(
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 4. গাড়ির মডেল
+                          _buildFieldLabel(strings.vehicleModel),
+                          const SizedBox(height: 6),
+                          _buildTextInput(
+                            controller: _modelController,
+                            hint: strings.vehicleModelPlaceholder,
+                          ),
+                          const SizedBox(height: 14),
+
+                          // 5. গাড়ির নিবন্ধন নম্বর
+                          _buildFieldLabel(strings.regNumber),
+                          const SizedBox(height: 6),
+                          _buildTextInput(
+                            controller: _registrationNoController,
+                            hint: strings.regNumberPlaceholder,
+                          ),
+                          const SizedBox(height: 14),
+
+                          const SizedBox(height: 18),
+
+                          // 6. অবস্থান (Location Section)
+                          Text(
+                            strings.locationSectionTitle,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Location Card with Border
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Checkbox(
-                                    value: _autoPay,
-                                    activeColor: AppColors.primaryOrange,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                // Row 1: বিভাগ & জেলা
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildSubLabel(strings.filterDivision),
+                                          const SizedBox(height: 4),
+                                          _buildDropdown(
+                                            hint: strings.selectDivision,
+                                            value: _selectedDivision,
+                                            items: provider.divisions,
+                                            onChanged: (val) {
+                                              setState(() {
+                                                _selectedDivision = val;
+                                                _selectedDistrict = null;
+                                                _selectedUpazila = null;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    side: const BorderSide(
-                                      color: Color(0xFF94A3B8),
-                                      width: 1.5,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildSubLabel(strings.filterDistrict),
+                                          const SizedBox(height: 4),
+                                          _buildDropdown(
+                                            hint: strings.selectDistrict,
+                                            value: _selectedDistrict,
+                                            items: availableDistricts,
+                                            isEnabled: _selectedDivision != null &&
+                                                availableDistricts.isNotEmpty,
+                                            onChanged: (val) {
+                                              setState(() {
+                                                _selectedDistrict = val;
+                                                _selectedUpazila = null;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    onChanged: (val) {
-                                      setState(() => _autoPay = val ?? false);
-                                    },
-                                  ),
+                                  ],
                                 ),
-                                const SizedBox(width: 10),
-                                const Expanded(
-                                  child: Text(
-                                    'Auto Pay via Automated Payment Gateway (অটো পে)',
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF334155),
+                                const SizedBox(height: 10),
+
+                                // Row 2: উপজেলা & ইউনিয়ন/পৌরসভা *
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildSubLabel(strings.filterUpazila),
+                                          const SizedBox(height: 4),
+                                          _buildDropdown(
+                                            hint: strings.selectUpazila,
+                                            value: _selectedUpazila,
+                                            items: availableUpazilas,
+                                            isEnabled: _selectedDistrict != null &&
+                                                availableUpazilas.isNotEmpty,
+                                            onChanged: (val) {
+                                              setState(() {
+                                                _selectedUpazila = val;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                strings.filterUnion,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF374151),
+                                                ),
+                                              ),
+                                              const Text(
+                                                ' *',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.redAccent,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          _buildTextInput(
+                                            controller: _unionController,
+                                            hint: strings.unionPlaceholder,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+
+                                // Row 3: ওয়ার্ড
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildSubLabel(strings.filterWard),
+                                    const SizedBox(height: 4),
+                                    _buildTextInput(
+                                      controller: _wardController,
+                                      hint: strings.wardPlaceholder,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 18),
 
-                        // 7. অবস্থান (Location Section)
-                        const Text(
-                          'অবস্থান',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Location Card with Border
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Row 1: বিভাগ & জেলা
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        _buildSubLabel('বিভাগ'),
-                                        const SizedBox(height: 4),
-                                        _buildDropdown(
-                                          hint: 'বিভাগ নির্বাচন করুন',
-                                          value: _selectedDivision,
-                                          items: provider.divisions,
-                                          onChanged: (val) {
-                                            setState(() {
-                                              _selectedDivision = val;
-                                              _selectedDistrict = null;
-                                              _selectedUpazila = null;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        _buildSubLabel('জেলা'),
-                                        const SizedBox(height: 4),
-                                        _buildDropdown(
-                                          hint: 'জেলা নির্বাচন করুন',
-                                          value: _selectedDistrict,
-                                          items: availableDistricts,
-                                          isEnabled:
-                                              _selectedDivision != null &&
-                                                  availableDistricts.isNotEmpty,
-                                          onChanged: (val) {
-                                            setState(() {
-                                              _selectedDistrict = val;
-                                              _selectedUpazila = null;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                          if (_validationError != null) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              _validationError!,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.w500,
                               ),
-                              const SizedBox(height: 10),
+                            ),
+                          ],
 
-                              // Row 2: উপজেলা & ইউনিয়ন/পৌরসভা *
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        _buildSubLabel('উপজেলা'),
-                                        const SizedBox(height: 4),
-                                        _buildDropdown(
-                                          hint: 'উপজেলা নির্বাচন করুন',
-                                          value: _selectedUpazila,
-                                          items: availableUpazilas,
-                                          isEnabled:
-                                              _selectedDistrict != null &&
-                                                  availableUpazilas.isNotEmpty,
-                                          onChanged: (val) {
-                                            setState(() {
-                                              _selectedUpazila = val;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: const [
-                                            Text(
-                                              'ইউনিয়ন/পৌরসভা',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF374151),
-                                              ),
-                                            ),
-                                            Text(
-                                              ' *',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        _buildTextInput(
-                                          controller: _unionController,
-                                          hint: 'ইউনিয়ন/পৌরসভা লিখুন',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                          const SizedBox(height: 20),
+
+                          // Submit Action Button: 'নিবন্ধন করুন' / 'Register Now'
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryOrange,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              const SizedBox(height: 10),
-
-                              // Row 3: ওয়ার্ড
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildSubLabel('ওয়ার্ড'),
-                                  const SizedBox(height: 4),
-                                  _buildTextInput(
-                                    controller: _wardController,
-                                    hint: 'ওয়ার্ড লিখুন',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        if (_validationError != null) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            _validationError!,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.w500,
+                              onPressed: _isSubmitting ? null : () => _submitForm(strings),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      strings.registerNowBtn,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
+                          const SizedBox(height: 8),
                         ],
-
-                        const SizedBox(height: 20),
-
-                        // Submit Action Button: 'নিবন্ধন করুন'
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryOrange,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: _isSubmitting ? null : _submitForm,
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'নিবন্ধন করুন',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 

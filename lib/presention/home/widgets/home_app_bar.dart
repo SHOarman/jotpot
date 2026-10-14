@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/driver_provider.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 import 'register_driver_dialog.dart';
 
@@ -49,62 +50,82 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
 
-        TextButton(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              barrierColor: Colors.black.withValues(alpha: 0.3),
-              builder: (context) => const RegisterDriverDialog(),
-            );
-          },
-          child: const Text(
-            'ড্রাইভার হিসেবে নিবন্ধন করুন',
-            style: TextStyle(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w600,
-              fontSize: 12.5,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-
-        // Language Selector Button [🌐 EN]
         Consumer<DriverProvider>(
-          builder: (context, provider, _) => InkWell(
-            onTap: () => provider.toggleLanguage(),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.language,
-                    size: 14,
-                    color: AppColors.textDark,
+          builder: (context, provider, _) {
+            final strings = AppStrings(provider.isBengali);
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    provider.isBengali ? 'EN' : 'বাংলা',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      barrierColor: Colors.black.withValues(alpha: 0.3),
+                      builder: (context) => const RegisterDriverDialog(),
+                    );
+                  },
+                  child: Text(
+                    strings.registerAsDriver,
                     style: const TextStyle(
                       color: AppColors.textDark,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
+                const SizedBox(width: 8),
+
+                // Language Selector Button [🌐 EN / বাংলা]
+                InkWell(
+                  onTap: () => provider.toggleLanguage(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: provider.isBengali
+                          ? const Color(0xFFF8FAFC)
+                          : const Color(0xFFEFF6FF),
+                      border: Border.all(
+                        color: provider.isBengali
+                            ? AppColors.border
+                            : const Color(0xFF3B82F6),
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.language,
+                          size: 15,
+                          color: provider.isBengali
+                              ? AppColors.textDark
+                              : const Color(0xFF1D4ED8),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          provider.isBengali ? 'English' : 'বাংলা',
+                          style: TextStyle(
+                            color: provider.isBengali
+                                ? AppColors.textDark
+                                : const Color(0xFF1D4ED8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(width: 8),
         const SizedBox(width: 14),

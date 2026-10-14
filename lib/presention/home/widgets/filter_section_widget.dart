@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/driver_provider.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 import 'filter_dropdown.dart';
 import 'filter_input_field.dart';
@@ -12,6 +13,8 @@ class FilterSectionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<DriverProvider>(
       builder: (context, provider, _) {
+        final strings = AppStrings(provider.isBengali);
+
         return LayoutBuilder(
           builder: (context, constraints) {
             final isWeb = constraints.maxWidth > 768;
@@ -45,8 +48,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 1. Vehicle Type
                         Expanded(
                           child: FilterDropdown(
-                            label: 'গাড়ির ধরন',
-                            hint: 'গাড়ির ধরন নির্বাচন করুন',
+                            label: strings.filterVehicleType,
+                            hint: strings.selectVehicleType,
                             value: provider.selectedVehicleType,
                             items: provider.vehicleTypes,
                             onChanged: (val) => provider.setVehicleType(val),
@@ -57,8 +60,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 2. Division
                         Expanded(
                           child: FilterDropdown(
-                            label: 'বিভাগ',
-                            hint: 'বিভাগ নির্বাচন করুন',
+                            label: strings.filterDivision,
+                            hint: strings.selectDivision,
                             value: provider.selectedDivision,
                             items: provider.divisions,
                             onChanged: (val) => provider.setDivision(val),
@@ -69,8 +72,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 3. District (Cascading: Only active when division is selected)
                         Expanded(
                           child: FilterDropdown(
-                            label: 'জেলা',
-                            hint: 'জেলা',
+                            label: strings.filterDistrict,
+                            hint: strings.selectDistrict,
                             value: provider.selectedDistrict,
                             items: provider.districts,
                             isEnabled: provider.selectedDivision != null,
@@ -82,8 +85,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 4. Upazila (Cascading: Only active when district is selected)
                         Expanded(
                           child: FilterDropdown(
-                            label: 'উপজেলা',
-                            hint: 'উপজেলা',
+                            label: strings.filterUpazila,
+                            hint: strings.selectUpazila,
                             value: provider.selectedUpazila,
                             items: provider.upazilas,
                             isEnabled: provider.selectedDistrict != null,
@@ -95,8 +98,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 5. Union / Municipality (Typeable text field)
                         Expanded(
                           child: FilterInputField(
-                            label: 'ইউনিয়ন/পৌরসভা',
-                            hint: 'ইউনিয়ন/পৌরসভা নির্বাচন করুন',
+                            label: strings.filterUnion,
+                            hint: strings.filterUnionHint,
                             value: provider.selectedUnion,
                             onChanged: (val) => provider.setUnion(val),
                           ),
@@ -106,8 +109,8 @@ class FilterSectionWidget extends StatelessWidget {
                         // 6. Ward (Typeable text field)
                         Expanded(
                           child: FilterInputField(
-                            label: 'ওয়ার্ড',
-                            hint: 'ওয়ার্ড নির্বাচন করুন',
+                            label: strings.filterWard,
+                            hint: strings.filterWardHint,
                             value: provider.selectedWard,
                             onChanged: (val) => provider.setWard(val),
                           ),
@@ -122,8 +125,8 @@ class FilterSectionWidget extends StatelessWidget {
                       children: [
                         Expanded(
                           child: FilterDropdown(
-                            label: 'গাড়ির ধরন',
-                            hint: 'গাড়ির ধরন নির্বাচন করুন',
+                            label: strings.filterVehicleType,
+                            hint: strings.selectVehicleType,
                             value: provider.selectedVehicleType,
                             items: provider.vehicleTypes,
                             onChanged: (val) => provider.setVehicleType(val),
@@ -132,8 +135,8 @@ class FilterSectionWidget extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilterDropdown(
-                            label: 'বিভাগ',
-                            hint: 'বিভাগ নির্বাচন করুন',
+                            label: strings.filterDivision,
+                            hint: strings.selectDivision,
                             value: provider.selectedDivision,
                             items: provider.divisions,
                             onChanged: (val) => provider.setDivision(val),
@@ -149,8 +152,8 @@ class FilterSectionWidget extends StatelessWidget {
                       children: [
                         Expanded(
                           child: FilterDropdown(
-                            label: 'জেলা',
-                            hint: 'জেলা',
+                            label: strings.filterDistrict,
+                            hint: strings.selectDistrict,
                             value: provider.selectedDistrict,
                             items: provider.districts,
                             isEnabled: provider.selectedDivision != null,
@@ -160,8 +163,8 @@ class FilterSectionWidget extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilterDropdown(
-                            label: 'উপজেলা',
-                            hint: 'উপজেলা',
+                            label: strings.filterUpazila,
+                            hint: strings.selectUpazila,
                             value: provider.selectedUpazila,
                             items: provider.upazilas,
                             isEnabled: provider.selectedDistrict != null,
@@ -178,8 +181,8 @@ class FilterSectionWidget extends StatelessWidget {
                       children: [
                         Expanded(
                           child: FilterInputField(
-                            label: 'ইউনিয়ন/পৌরসভা',
-                            hint: 'ইউনিয়ন/পৌরসভা নির্বাচন করুন',
+                            label: strings.filterUnion,
+                            hint: strings.filterUnionHint,
                             value: provider.selectedUnion,
                             onChanged: (val) => provider.setUnion(val),
                           ),
@@ -187,8 +190,8 @@ class FilterSectionWidget extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilterInputField(
-                            label: 'ওয়ার্ড',
-                            hint: 'ওয়ার্ড নির্বাচন করুন',
+                            label: strings.filterWard,
+                            hint: strings.filterWardHint,
                             value: provider.selectedWard,
                             onChanged: (val) => provider.setWard(val),
                           ),

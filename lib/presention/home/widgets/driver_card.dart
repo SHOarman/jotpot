@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/driver_model.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
 class DriverCard extends StatelessWidget {
@@ -46,9 +47,16 @@ class DriverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locationText = driver.address.isNotEmpty
-        ? driver.address
-        : '${driver.upazila}, ${driver.district}';
+    final strings = AppStrings.of(context);
+
+    final locUpazila = strings.translateUpazila(driver.upazila);
+    final locDistrict = strings.translateDistrict(driver.district);
+    final fallbackLoc = (locUpazila.isNotEmpty && locDistrict.isNotEmpty)
+        ? '$locUpazila, $locDistrict'
+        : (locDistrict.isNotEmpty ? locDistrict : locUpazila);
+
+    final locationText =
+        driver.address.isNotEmpty ? driver.address : fallbackLoc;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -97,7 +105,7 @@ class DriverCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  driver.vehicleType,
+                  strings.vehicleCategoryName(driver.vehicleType),
                   style: const TextStyle(
                     color: AppColors.renewText,
                     fontSize: 12,
@@ -163,7 +171,7 @@ class DriverCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'আসন সংখ্যা: ${driver.seatCount}',
+                    '${strings.seatingCountPrefix}${driver.seatCount}',
                     style: const TextStyle(
                       fontSize: 13.5,
                       color: AppColors.textBody,
@@ -196,9 +204,9 @@ class DriverCard extends StatelessWidget {
                 color: Colors.white,
                 size: 20,
               ),
-              label: const Text(
-                'কল করুন',
-                style: TextStyle(
+              label: Text(
+                strings.callNow,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,

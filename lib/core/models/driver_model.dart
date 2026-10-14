@@ -11,6 +11,11 @@ class DriverModel {
   final String address;
   final String details;
   final int? seatCount;
+  final String vehicleModel;
+  final String vehicleRegNumber;
+  final DateTime? expiryDate;
+  final bool isActive;
+  final bool autoPay;
 
   DriverModel({
     required this.id,
@@ -25,6 +30,11 @@ class DriverModel {
     required this.address,
     required this.details,
     this.seatCount,
+    this.vehicleModel = '',
+    this.vehicleRegNumber = '',
+    this.expiryDate,
+    this.isActive = true,
+    this.autoPay = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -41,6 +51,11 @@ class DriverModel {
       'address': address,
       'details': details,
       'seatCount': seatCount,
+      'vehicleModel': vehicleModel,
+      'vehicleRegNumber': vehicleRegNumber,
+      'expiryDate': expiryDate?.toIso8601String(),
+      'isActive': isActive,
+      'autoPay': autoPay,
     };
   }
 
@@ -61,18 +76,35 @@ class DriverModel {
       ].join(', ');
     }
 
+    final vehicleModel = (map['vehicleModel'] ?? '').toString();
+    final vehicleRegNumber = (map['vehicleRegNumber'] ?? '').toString();
+
     String details = (map['details'] ?? '').toString();
     if (details.isEmpty) {
-      final model = (map['vehicleModel'] ?? '').toString();
-      final reg = (map['vehicleRegNumber'] ?? '').toString();
       details = [
-        if (model.isNotEmpty) 'মডেল: $model',
-        if (reg.isNotEmpty) 'রেজিস্ট্রেশন: $reg',
+        if (vehicleModel.isNotEmpty) 'মডেল: $vehicleModel',
+        if (vehicleRegNumber.isNotEmpty) 'রেজিস্ট্রেশন: $vehicleRegNumber',
       ].join(' | ');
     }
 
     final rawSeat =
         map['seatCount'] ?? map['seatingCapacity'] ?? map['capacity'];
+
+    DateTime? parsedExpiry;
+    final rawExpiry = map['expiryDate'];
+    if (rawExpiry != null) {
+      if (rawExpiry is DateTime) {
+        parsedExpiry = rawExpiry;
+      } else if (rawExpiry.runtimeType.toString().contains('Timestamp')) {
+        try {
+          parsedExpiry = (rawExpiry as dynamic).toDate();
+        } catch (_) {}
+      } else if (rawExpiry is String) {
+        parsedExpiry = DateTime.tryParse(rawExpiry);
+      } else if (rawExpiry is int) {
+        parsedExpiry = DateTime.fromMillisecondsSinceEpoch(rawExpiry);
+      }
+    }
 
     return DriverModel(
       id: id ?? (map['id'] ?? '').toString(),
@@ -87,6 +119,11 @@ class DriverModel {
       address: address,
       details: details,
       seatCount: rawSeat != null ? int.tryParse(rawSeat.toString()) : null,
+      vehicleModel: vehicleModel,
+      vehicleRegNumber: vehicleRegNumber,
+      expiryDate: parsedExpiry,
+      isActive: map['isActive'] == null ? true : map['isActive'] == true,
+      autoPay: map['autoPay'] == true,
     );
   }
 }
