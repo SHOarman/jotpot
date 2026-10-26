@@ -125,8 +125,15 @@ class HomeScreen extends StatelessWidget {
     if (provider.isLoading) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(),
+          padding: EdgeInsets.all(48.0),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 4.0,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
+            ),
+          ),
         ),
       );
     }

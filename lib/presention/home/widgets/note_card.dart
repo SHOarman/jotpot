@@ -17,7 +17,7 @@ class NoteCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // Navigate using GetX Routing
-        Get.toNamed(AppRoutes.NOTE_DETAIL, arguments: note);
+        Get.toNamed(AppRoutes.noteDetail, arguments: note);
       },
       child: Container(
         decoration: BoxDecoration(

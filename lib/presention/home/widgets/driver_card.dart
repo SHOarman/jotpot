@@ -58,6 +58,8 @@ class DriverCard extends StatelessWidget {
     final locationText =
         driver.address.isNotEmpty ? driver.address : fallbackLoc;
 
+    final displayDetails = driver.getLocalizedDetails(isBn: strings.isBn);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
@@ -116,11 +118,11 @@ class DriverCard extends StatelessWidget {
             ],
           ),
 
-          // 2. Subtitle / Details (e.g. ijwirw, allion 2004)
-          if (driver.details.isNotEmpty) ...[
+          // 2. Subtitle / Details (e.g. Model: 2011 | Registration: 121416)
+          if (displayDetails.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text(
-              driver.details,
+              displayDetails,
               style: const TextStyle(
                 fontSize: 13.5,
                 color: AppColors.textMuted,

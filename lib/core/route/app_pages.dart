@@ -5,21 +5,21 @@ import '../../presention/driver/register_driver_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
-  static const INITIAL = AppRoutes.SPLASH;
+  static const initial = AppRoutes.splash;
 
   static final routes = [
     GetPage(
-      name: AppRoutes.SPLASH,
+      name: AppRoutes.splash,
       page: () => const SplashScreen(),
       transition: Transition.fade,
     ),
     GetPage(
-      name: AppRoutes.HOME,
+      name: AppRoutes.home,
       page: () => const HomeScreen(),
       transition: Transition.fadeIn,
     ),
     GetPage(
-      name: AppRoutes.REGISTER_DRIVER,
+      name: AppRoutes.registerDriver,
       page: () => const RegisterDriverScreen(),
       transition: Transition.rightToLeftWithFade,
     ),

@@ -133,7 +133,7 @@ class HomeFooterWidget extends StatelessWidget {
                           const SizedBox(height: 12),
                           GestureDetector(
                             onTap: () =>
-                                Get.toNamed(AppRoutes.REGISTER_DRIVER),
+                                Get.toNamed(AppRoutes.registerDriver),
                             child: Text(
                               strings.registerAsDriver,
                               style: const TextStyle(
@@ -227,7 +227,7 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.REGISTER_DRIVER),
+                  onTap: () => Get.toNamed(AppRoutes.registerDriver),
                   child: Text(
                     strings.registerAsDriver,
                     style:

@@ -4,15 +4,60 @@ import '../models/note_model.dart';
 
 class HiveService {
   static const String _boxName = 'jotpot_drivers_box';
+  static const String _paymentBoxName = 'jotpot_payment_prefs';
   static Box? _box;
+  static Box? _paymentBox;
 
-  /// Initialize Hive and open driver directory box
+  /// Initialize Hive and open driver directory and payment box
   static Future<void> init() async {
     await Hive.initFlutter();
     _box = await Hive.openBox(_boxName);
+    _paymentBox = await Hive.openBox(_paymentBoxName);
     
     // Clear any previous mock/dummy data so only real Firestore data exists
     await _box!.clear();
+  }
+
+  /// Save last used bKash number for driver/user
+  static Future<void> saveLastBkashNumber({
+    required String driverPhone,
+    required String bkashNumber,
+    String? driverId,
+  }) async {
+    _paymentBox ??= await Hive.openBox(_paymentBoxName);
+    final cleanPhone = driverPhone.trim();
+    final cleanBkash = bkashNumber.trim();
+    if (cleanBkash.isNotEmpty) {
+      if (cleanPhone.isNotEmpty) {
+        await _paymentBox!.put('bkash_phone_$cleanPhone', cleanBkash);
+      }
+      if (driverId != null && driverId.isNotEmpty) {
+        await _paymentBox!.put('bkash_id_$driverId', cleanBkash);
+      }
+      await _paymentBox!.put('last_global_bkash', cleanBkash);
+    }
+  }
+
+  /// Retrieve last used bKash number
+  static String? getLastBkashNumber({String? driverPhone, String? driverId}) {
+    if (_paymentBox == null) return null;
+    if (driverPhone != null && driverPhone.trim().isNotEmpty) {
+      final val = _paymentBox!.get('bkash_phone_${driverPhone.trim()}');
+      if (val != null && val.toString().trim().isNotEmpty) {
+        return val.toString().trim();
+      }
+    }
+    if (driverId != null && driverId.trim().isNotEmpty) {
+      final val = _paymentBox!.get('bkash_id_${driverId.trim()}');
+      if (val != null && val.toString().trim().isNotEmpty) {
+        return val.toString().trim();
+      }
+    }
+    final globalVal = _paymentBox!.get('last_global_bkash');
+    if (globalVal != null && globalVal.toString().trim().isNotEmpty) {
+      return globalVal.toString().trim();
+    }
+    return null;
   }
 
   /// Get all drivers stored in Hive

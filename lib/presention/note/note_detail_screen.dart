@@ -49,7 +49,7 @@
 //                 icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
 //                 onPressed: () {
 //                   // Navigate to Edit screen using GetX Routing
-//                   Get.toNamed(AppRoutes.EDIT_NOTE, arguments: currentNote);
+//                   Get.toNamed(AppRoutes.editNote, arguments: currentNote);
 //                 },
 //               ),
 //               IconButton(

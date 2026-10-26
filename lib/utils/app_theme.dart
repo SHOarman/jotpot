@@ -46,6 +46,10 @@ class AppTheme {
         primary: AppColors.primaryOrange,
         surface: AppColors.background,
       ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primaryOrange,
+        strokeWidth: 4.0,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,

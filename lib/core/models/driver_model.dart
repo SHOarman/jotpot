@@ -16,6 +16,7 @@ class DriverModel {
   final DateTime? expiryDate;
   final bool isActive;
   final bool autoPay;
+  final String lastBkashNumber;
 
   DriverModel({
     required this.id,
@@ -35,6 +36,7 @@ class DriverModel {
     this.expiryDate,
     this.isActive = true,
     this.autoPay = false,
+    this.lastBkashNumber = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -56,6 +58,7 @@ class DriverModel {
       'expiryDate': expiryDate?.toIso8601String(),
       'isActive': isActive,
       'autoPay': autoPay,
+      'lastBkashNumber': lastBkashNumber,
     };
   }
 
@@ -76,10 +79,23 @@ class DriverModel {
       ].join(', ');
     }
 
-    final vehicleModel = (map['vehicleModel'] ?? '').toString();
-    final vehicleRegNumber = (map['vehicleRegNumber'] ?? '').toString();
+    String vehicleModel = (map['vehicleModel'] ?? '').toString();
+    String vehicleRegNumber = (map['vehicleRegNumber'] ?? '').toString();
 
     String details = (map['details'] ?? '').toString();
+    if (vehicleModel.isEmpty && details.isNotEmpty) {
+      final match = RegExp(r'(?:মডেল|Model):\s*([^|]+)').firstMatch(details);
+      if (match != null) {
+        vehicleModel = match.group(1)?.trim() ?? '';
+      }
+    }
+    if (vehicleRegNumber.isEmpty && details.isNotEmpty) {
+      final match = RegExp(r'(?:রেজিস্ট্রেশন|Registration|Reg):\s*([^|]+)').firstMatch(details);
+      if (match != null) {
+        vehicleRegNumber = match.group(1)?.trim() ?? '';
+      }
+    }
+
     if (details.isEmpty) {
       details = [
         if (vehicleModel.isNotEmpty) 'মডেল: $vehicleModel',
@@ -124,7 +140,39 @@ class DriverModel {
       expiryDate: parsedExpiry,
       isActive: map['isActive'] == null ? true : map['isActive'] == true,
       autoPay: map['autoPay'] == true,
+      lastBkashNumber:
+          (map['lastBkashNumber'] ?? map['bkashNumber'] ?? '').toString(),
     );
+  }
+
+  String getLocalizedDetails({required bool isBn}) {
+    final modelLabel = isBn ? 'মডেল' : 'Model';
+    final regLabel = isBn ? 'রেজিস্ট্রেশন' : 'Registration';
+    final modelVal = vehicleModel.trim();
+    final regVal = vehicleRegNumber.trim();
+    if (modelVal.isNotEmpty || regVal.isNotEmpty) {
+      final parts = <String>[];
+      if (modelVal.isNotEmpty) {
+        parts.add('$modelLabel: $modelVal');
+      }
+      if (regVal.isNotEmpty) {
+        parts.add('$regLabel: $regVal');
+      }
+      return parts.join(' | ');
+    }
+    if (details.isNotEmpty) {
+      if (isBn) {
+        return details
+            .replaceAll(RegExp(r'\bModel\s*:', caseSensitive: false), 'মডেল:')
+            .replaceAll(RegExp(r'\bRegistration\s*:', caseSensitive: false), 'রেজিস্ট্রেশন:')
+            .replaceAll(RegExp(r'\bReg\s*:', caseSensitive: false), 'রেজিস্ট্রেশন:');
+      } else {
+        return details
+            .replaceAll(RegExp(r'মডেল\s*:'), 'Model:')
+            .replaceAll(RegExp(r'রেজিস্ট্রেশন\s*:'), 'Registration:');
+      }
+    }
+    return '';
   }
 }
 

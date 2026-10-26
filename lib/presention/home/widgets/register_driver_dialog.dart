@@ -420,7 +420,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
+                                        strokeWidth: 3.0,
                                         color: Colors.white,
                                       ),
                                     )

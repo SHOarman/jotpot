@@ -1,5 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,11 +14,13 @@ import 'utils/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint('.env load error: $e');
+  // Load environment variables (skipped on Web because web servers/cPanel block dotfiles like .env with 403 Forbidden)
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      debugPrint('.env load error: $e');
+    }
   }
 
   // Initialize Firebase for Cloud Firestore real data
@@ -59,10 +61,8 @@ class MyApp extends StatelessWidget {
           return GetMaterialApp(
             title: 'Jotpot - ভাড়ায় চালিত গাড়ির ডিরেক্টরি',
             debugShowCheckedModeBanner: false,
-            locale: DevicePreview.locale(context),
-            builder: DevicePreview.appBuilder,
             theme: AppTheme.lightTheme,
-            initialRoute: AppPages.INITIAL,
+            initialRoute: AppPages.initial,
             getPages: AppPages.routes,
           );
         },

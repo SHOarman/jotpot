@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
 import '../models/global_settings_model.dart';
@@ -39,6 +40,11 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void _initFirestore() {
+    if (Firebase.apps.isEmpty) {
+      debugPrint('Firebase not initialized yet. Skipping Firestore listener setup.');
+      return;
+    }
+
     _isLoading = true;
     notifyListeners();
 

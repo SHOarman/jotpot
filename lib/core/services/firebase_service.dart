@@ -1,10 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart' show Firebase;
 import '../models/driver_model.dart';
 
 class FirebaseService {
-  static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static FirebaseFirestore? _cachedDb;
 
-  static FirebaseFirestore get db => _db;
+  static FirebaseFirestore get db {
+    _cachedDb ??= FirebaseFirestore.instance;
+    return _cachedDb!;
+  }
+
+  static FirebaseFirestore get _db => db;
 
   /// Fetch active drivers from Firestore (excluding expired ones)
   static Stream<List<DriverModel>> streamActiveDrivers({
@@ -13,7 +19,10 @@ class FirebaseService {
     String? upazila,
     String? vehicleType,
   }) {
-    Query query = _db.collection('drivers').where('isActive', isEqualTo: true);
+    if (Firebase.apps.isEmpty) {
+      return Stream.value([]);
+    }
+    Query query = db.collection('drivers').where('isActive', isEqualTo: true);
 
     if (division != null && division.isNotEmpty) {
       query = query.where('division', isEqualTo: division);
@@ -172,6 +181,9 @@ class FirebaseService {
 
   /// Stream vehicle types from Firestore
   static Stream<List<Map<String, dynamic>>> streamVehicleTypes() {
+    if (Firebase.apps.isEmpty) {
+      return Stream.value([]);
+    }
     return _db.collection('vehicleTypes').snapshots().map((snap) {
       return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
     });
@@ -209,13 +221,18 @@ class FirebaseService {
     required String transactionId,
     required int durationDays,
     required num amount,
+    String bkashNumber = '',
     bool autoPay = false,
   }) async {
+    final cleanBkash = bkashNumber.trim();
+
     // 1. Payments কালেকশনে জমা হবে (অ্যাডমিন প্যানেলের Subscription Payments ট্যাবে দেখাবে)
     await _db.collection('payments').add({
       'driverId': driverId,
       'driverName': driverName,
       'driverPhone': driverPhone,
+      'bkashNumber': cleanBkash.isNotEmpty ? cleanBkash : driverPhone,
+      'paymentMethod': 'bKash',
       'amount': amount,
       'durationDays': durationDays,
       'transactionId': transactionId.trim(),
@@ -223,22 +240,33 @@ class FirebaseService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    if (autoPay) {
-      try {
-        await _db.collection('drivers').doc(driverId).update({
-          'autoPay': true,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } catch (_) {}
+    // 2. ড্রাইভার ডকুমেন্টে লাস্ট বিকাশ নম্বর ও অটো পে আপডেট
+    final Map<String, dynamic> driverUpdates = {
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (cleanBkash.isNotEmpty) {
+      driverUpdates['lastBkashNumber'] = cleanBkash;
     }
+    if (autoPay) {
+      driverUpdates['autoPay'] = true;
+    }
+    try {
+      await _db.collection('drivers').doc(driverId).update(driverUpdates);
+    } catch (_) {}
 
-    // ২. Admin Notification কালেকশনে পাঠানো হবে (অ্যাডমিনের বেল আইকনে লাল ব্যাজ শো করবে)
+    // 3. Admin Notification কালেকশনে পাঠানো হবে (অ্যাডমিনের বেল আইকনে লাল ব্যাজ শো করবে)
+    final bkashNotice =
+        cleanBkash.isNotEmpty ? ' | বিকাশ: $cleanBkash' : '';
     await _db.collection('notifications').add({
       'type': 'renewal',
       'driverId': driverId,
       'driverName': driverName,
       'driverPhone': driverPhone,
-      'message': 'লাইসেন্স রিনিউ রিকোয়েস্ট: $driverName ($driverPhone)',
+      'bkashNumber': cleanBkash,
+      'amount': amount,
+      'transactionId': transactionId.trim(),
+      'message':
+          'লাইসেন্স রিনিউ রিকোয়েস্ট: $driverName ($driverPhone)$bkashNotice - Trx: $transactionId',
       'createdAt': FieldValue.serverTimestamp(),
       'readBy': [],
     });
@@ -252,6 +280,7 @@ class FirebaseService {
     required String transactionId,
     required int durationDays,
     required num amount,
+    String bkashNumber = '',
     bool autoPay = false,
   }) =>
       submitRenewalToAdmin(
@@ -261,6 +290,7 @@ class FirebaseService {
         transactionId: transactionId,
         durationDays: durationDays,
         amount: amount,
+        bkashNumber: bkashNumber,
         autoPay: autoPay,
       );
 
@@ -286,6 +316,9 @@ class FirebaseService {
 
   /// Listen to global settings (live banner, notice, registration status)
   static Stream<DocumentSnapshot<Map<String, dynamic>>> listenGlobalSettings() {
+    if (Firebase.apps.isEmpty) {
+      return const Stream.empty();
+    }
     return _db.collection('settings').doc('global').snapshots();
   }
 }

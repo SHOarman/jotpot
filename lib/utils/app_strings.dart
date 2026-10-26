@@ -736,6 +736,61 @@ class AppStrings {
       : 'Your renewal request has been submitted to the admin dashboard. The license expiry will be updated once approved by admin.';
   String get closeButton => isBn ? 'বন্ধ করুন (Close)' : 'Close';
 
+  // --- bKash Payment Strings ---
+  String get bkashPaymentTitle =>
+      isBn ? 'বিকাশ পেমেন্ট (bKash Payment)' : 'bKash Payment';
+  String get bkashPaymentSubtitle => isBn
+      ? 'ঝটপট সার্ভিসের জন্য সহজে ও নিরাপদে বিকাশ দিয়ে পেমেন্ট করুন।'
+      : 'Pay easily and securely with bKash for Jotpot services.';
+  String get bkashAccountLabel =>
+      isBn ? 'পেমেন্ট বিকাশ নম্বর (bKash Number)' : 'Payment bKash Number';
+  String get bkashSavedBadge =>
+      isBn ? 'সংরক্ষিত নম্বর' : 'Saved Number';
+  String get bkashDriverBadge =>
+      isBn ? 'ড্রাইভারের নম্বর' : 'Driver Phone';
+  String get bkashMerchantAccount =>
+      isBn ? 'ঝটপট বিকাশ একাউন্ট' : 'Jotpot bKash Account';
+  String get copiedToClipboard =>
+      isBn ? 'বিকাশ নম্বরটি কপি করা হয়েছে!' : 'bKash number copied to clipboard!';
+  String payWithBkashBtn(int amount) => isBn
+      ? 'বিকাশ দিয়ে ৳$amount পেমেন্ট করুন'
+      : 'Pay BDT $amount with bKash';
+  String get openBkashApp =>
+      isBn ? 'বিকাশ অ্যাপ ওপেন করুন' : 'Open bKash App';
+  String get dialUssd =>
+      isBn ? '*247# ডায়াল করুন' : 'Dial *247#';
+  String get bkashOtpStep =>
+      isBn ? 'ভেরিফিকেশন কোড (OTP)' : 'Verification Code (OTP)';
+  String bkashOtpPrompt(String phone) => isBn
+      ? '$phone নম্বরে পাঠানো ভেরিফিকেশন কোড লিখুন'
+      : 'Enter the verification code sent to $phone';
+  String get bkashPinStep =>
+      isBn ? 'বিকাশ পিন (PIN)' : 'bKash PIN';
+  String get bkashPinPrompt =>
+      isBn ? 'আপনার বিকাশ অ্যাকাউন্টের গোপন পিন লিখুন' : 'Enter your bKash secret PIN';
+  String get confirmBkashPay =>
+      isBn ? 'পেমেন্ট নিশ্চিত করুন' : 'Confirm Payment';
+  String get savedBkashNotice => isBn
+      ? 'এই বিকাশ নম্বরটি পরবর্তী পেমেন্টের জন্য সংরক্ষিত থাকবে।'
+      : 'This bKash number will be remembered for next renewals.';
+  String get nextStep => isBn ? 'পরবর্তী ধাপ' : 'Next';
+  String get backStep => isBn ? 'পূর্ববর্তী' : 'Back';
+  String get manualSendOption =>
+      isBn ? 'ম্যানুয়াল বিকাশ (App / USSD)' : 'Manual (App / USSD)';
+  String get autoGatewayOption =>
+      isBn ? 'সরাসরি গেটওয়ে (Instant Checkout)' : 'Instant Checkout';
+  String get invalidPhone => isBn
+      ? 'সঠিক ১১-সংখ্যার মোবাইল নম্বর দিন'
+      : 'Please enter a valid 11-digit mobile number';
+  String get fillOtpFirst => isBn
+      ? 'অনুগ্রহ করে ভেরিফিকেশন কোড লিখুন'
+      : 'Please enter verification code';
+  String get fillPinFirst => isBn
+      ? 'অনুগ্রহ করে বিকাশ পিন লিখুন'
+      : 'Please enter bKash PIN';
+  String get autoFillDemoOtp =>
+      isBn ? 'টেস্ট কোড (১২৩৪৫৬)' : 'Test OTP (123456)';
+
   // --- Registration Dialog ---
   String get regDialogTitle =>
       isBn ? 'ড্রাইভার হিসেবে নিবন্ধন করুন' : 'Register as a Driver';
@@ -751,6 +806,22 @@ class AppStrings {
   String get regNumber => isBn ? 'রেজিস্ট্রেশন নম্বর' : 'Registration Number';
   String get regNumberPlaceholder =>
       isBn ? 'e.g. ঢাকা মেট্রো-গ ১২-৩৪৫৬' : 'e.g. Dhaka Metro-GA 12-3456';
+  String get modelLabel => isBn ? 'মডেল' : 'Model';
+  String get registrationLabel => isBn ? 'রেজিস্ট্রেশন' : 'Registration';
+
+  String localizeDetails(String details) {
+    if (details.isEmpty) return '';
+    if (isBn) {
+      return details
+          .replaceAll(RegExp(r'\bModel\s*:', caseSensitive: false), 'মডেল:')
+          .replaceAll(RegExp(r'\bRegistration\s*:', caseSensitive: false), 'রেজিস্ট্রেশন:')
+          .replaceAll(RegExp(r'\bReg\s*:', caseSensitive: false), 'রেজিস্ট্রেশন:');
+    } else {
+      return details
+          .replaceAll(RegExp(r'মডেল\s*:'), 'Model:')
+          .replaceAll(RegExp(r'রেজিস্ট্রেশন\s*:'), 'Registration:');
+    }
+  }
   String get locationSectionTitle =>
       isBn ? 'ঠিকানা ও এলাকা নির্বাচন' : 'Address & Location Selection';
   String get selectDivisionFirst =>
