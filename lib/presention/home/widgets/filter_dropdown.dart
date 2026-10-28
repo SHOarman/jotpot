@@ -9,6 +9,7 @@ class FilterDropdown extends StatelessWidget {
   final List<String> items;
   final ValueChanged<String?>? onChanged;
   final bool isEnabled;
+  final bool isLoading;
 
   const FilterDropdown({
     super.key,
@@ -18,6 +19,7 @@ class FilterDropdown extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.isEnabled = true,
+    this.isLoading = false,
   });
 
   @override
@@ -57,11 +59,20 @@ class FilterDropdown extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               isExpanded: true,
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: active ? AppColors.textMuted : const Color(0xFFCBD5E1),
-                size: 20,
-              ),
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFE96B1F),
+                      ),
+                    )
+                  : Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: active ? AppColors.textMuted : const Color(0xFFCBD5E1),
+                      size: 20,
+                    ),
               items: active
                   ? [
                       DropdownMenuItem<String>(

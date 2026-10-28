@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/driver_provider.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../core/services/union_api_service.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
@@ -21,7 +22,6 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   final _phoneController = TextEditingController();
   final _modelController = TextEditingController();
   final _registrationNoController = TextEditingController();
-  final _unionController = TextEditingController();
   final _wardController = TextEditingController();
 
   // Selection states
@@ -29,7 +29,12 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   String? _selectedDivision;
   String? _selectedDistrict;
   String? _selectedUpazila;
+  String? _selectedUnion; // Union dropdown value
   String? _validationError;
+
+  // Union API state
+  List<String> _availableUnions = [];
+  bool _isLoadingUnions = false;
 
   @override
   void dispose() {
@@ -37,12 +42,40 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     _phoneController.dispose();
     _modelController.dispose();
     _registrationNoController.dispose();
-    _unionController.dispose();
     _wardController.dispose();
     super.dispose();
   }
 
   bool _isSubmitting = false;
+
+  /// Fetch union list from BD API for the given upazila.
+  Future<void> _fetchUnions(String upazila) async {
+    setState(() {
+      _isLoadingUnions = true;
+      _selectedUnion = null;
+      _availableUnions = [];
+    });
+    try {
+      final unions = await UnionApiService.getUnions(
+        divisionBn: _selectedDivision ?? '',
+        districtBn: _selectedDistrict ?? '',
+        upazilaName: upazila,
+      );
+      if (mounted) {
+        setState(() {
+          _availableUnions = unions;
+          _isLoadingUnions = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _availableUnions = [];
+          _isLoadingUnions = false;
+        });
+      }
+    }
+  }
 
   void _submitForm(AppStrings strings) async {
     setState(() => _validationError = null);
@@ -69,7 +102,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           division: _selectedDivision ?? 'ঢাকা',
           district: _selectedDistrict ?? _selectedDivision ?? 'ঢাকা',
           upazila: _selectedUpazila ?? '',
-          union: _unionController.text.trim(),
+          union: _selectedUnion ?? '',
           ward: _wardController.text.trim(),
           transactionId: '',
         );
@@ -200,7 +233,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                           ),
                           const SizedBox(height: 14),
 
-                          // 3. গাড়ির ধরন
+                          // 3. গাড়ির ধরন
                           _buildFieldLabel(strings.filterVehicleType),
                           const SizedBox(height: 6),
                           _buildDropdown(
@@ -213,7 +246,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                           ),
                           const SizedBox(height: 14),
 
-                          // 4. গাড়ির মডেল
+                          // 4. গাড়ির মডেল
                           _buildFieldLabel(strings.vehicleModel),
                           const SizedBox(height: 6),
                           _buildTextInput(
@@ -222,7 +255,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                           ),
                           const SizedBox(height: 14),
 
-                          // 5. গাড়ির নিবন্ধন নম্বর
+                          // 5. গাড়ির নিবন্ধন নম্বর
                           _buildFieldLabel(strings.regNumber),
                           const SizedBox(height: 6),
                           _buildTextInput(
@@ -274,6 +307,8 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                                 _selectedDivision = val;
                                                 _selectedDistrict = null;
                                                 _selectedUpazila = null;
+                                                _selectedUnion = null;
+                                                _availableUnions = [];
                                               });
                                             },
                                           ),
@@ -298,6 +333,8 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                               setState(() {
                                                 _selectedDistrict = val;
                                                 _selectedUpazila = null;
+                                                _selectedUnion = null;
+                                                _availableUnions = [];
                                               });
                                             },
                                           ),
@@ -308,7 +345,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                 ),
                                 const SizedBox(height: 10),
 
-                                // Row 2: উপজেলা & ইউনিয়ন/পৌরসভা *
+                                // Row 2: উপজেলা & ইউনিয়ন/পৌরসভা (BD API dropdown)
                                 Row(
                                   children: [
                                     Expanded(
@@ -327,7 +364,10 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                             onChanged: (val) {
                                               setState(() {
                                                 _selectedUpazila = val;
+                                                _selectedUnion = null;
+                                                _availableUnions = [];
                                               });
+                                              if (val != null) _fetchUnions(val);
                                             },
                                           ),
                                         ],
@@ -360,9 +400,18 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                             ],
                                           ),
                                           const SizedBox(height: 4),
-                                          _buildTextInput(
-                                            controller: _unionController,
-                                            hint: strings.unionPlaceholder,
+                                          _buildDropdown(
+                                            hint: _isLoadingUnions
+                                                ? 'লোড হচ্ছে...'
+                                                : strings.unionPlaceholder,
+                                            value: _selectedUnion,
+                                            items: _availableUnions,
+                                            isEnabled: _selectedUpazila != null &&
+                                                !_isLoadingUnions,
+                                            isLoading: _isLoadingUnions,
+                                            onChanged: (val) {
+                                              setState(() => _selectedUnion = val);
+                                            },
                                           ),
                                         ],
                                       ),
@@ -371,7 +420,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                 ),
                                 const SizedBox(height: 10),
 
-                                // Row 3: ওয়ার্ড
+                                // Row 3: ওয়ার্ড
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -513,8 +562,9 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
     bool isEnabled = true,
+    bool isLoading = false,
   }) {
-    final active = isEnabled && items.isNotEmpty;
+    final active = isEnabled && items.isNotEmpty && !isLoading;
 
     return Container(
       height: 44,
@@ -537,11 +587,20 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
             overflow: TextOverflow.ellipsis,
           ),
           isExpanded: true,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: active ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
-            size: 18,
-          ),
+          icon: isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primaryOrange,
+                  ),
+                )
+              : Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: active ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                  size: 18,
+                ),
           items: active
               ? items.map((item) {
                   return DropdownMenuItem<String>(

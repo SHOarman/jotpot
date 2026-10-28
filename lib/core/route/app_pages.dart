@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import '../../presention/splash/splash_screen.dart';
 import '../../presention/home/home_screen.dart';
 import '../../presention/driver/register_driver_screen.dart';
+import '../../presention/policy/policy_content.dart';
+import '../../presention/policy/policy_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -21,6 +23,21 @@ class AppPages {
     GetPage(
       name: AppRoutes.registerDriver,
       page: () => const RegisterDriverScreen(),
+      transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PolicyScreen(type: PolicyType.privacyPolicy),
+      transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: AppRoutes.termsAndConditions,
+      page: () => const PolicyScreen(type: PolicyType.termsAndConditions),
+      transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: AppRoutes.aboutUs,
+      page: () => const PolicyScreen(type: PolicyType.aboutUs),
       transition: Transition.rightToLeftWithFade,
     ),
   ];

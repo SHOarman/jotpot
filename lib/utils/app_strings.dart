@@ -858,6 +858,11 @@ class AppStrings {
   String get footerRegister =>
       isBn ? 'ড্রাইভার নিবন্ধন' : 'Driver Registration';
   String get footerRenew => isBn ? 'লাইসেন্স নবায়ন' : 'Renew License';
+  String get footerPrivacyPolicy => isBn ? 'গোপনীয়তা নীতি' : 'Privacy Policy';
+  String get footerTermsConditions =>
+      isBn ? 'শর্তাবলী ও নিয়মাবলী' : 'Terms & Conditions';
+  String get footerAboutUs => isBn ? 'আমাদের সম্পর্কে' : 'About Us';
+  String get footerLegalTitle => isBn ? 'পলিসি ও নির্দেশিকা' : 'Policies & Legal';
   String get footerHelplineTitle => isBn ? 'সহায়তা ও যোগাযোগ' : 'Help & Contact';
   String get footerHelplineNumber => '01677234252';
   String get footerCopyright => isBn

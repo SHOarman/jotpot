@@ -1,11 +1,13 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
 import '../models/global_settings_model.dart';
 import '../models/vehicle_type_model.dart';
 import '../services/firebase_service.dart';
+import '../services/geo_service.dart';
 import '../services/hive_service.dart';
+import '../services/union_api_service.dart';
 import '../../utils/app_strings.dart';
 
 class DriverProvider extends ChangeNotifier {
@@ -21,12 +23,16 @@ class DriverProvider extends ChangeNotifier {
   String? _selectedUnion;
   String? _selectedWard;
 
+  // Union dropdown state (loaded from BD API when upazila is selected)
+  List<String> _unions = [];
+  bool _isLoadingUnions = false;
+
   // Modes & Language
   bool _isBengali = true;
   bool _isUnityMode = false; // Home Mode vs Unity Mode
 
   // Notice Text & Global Settings
-  String _noticeText = 'যেকোনো প্রয়োজন বা সহায়তার জন্য কল করুন: 01677234252';
+  String _noticeText = 'à¦¯à§‡à¦•à§‹à¦¨à§‹ à¦ªà§à¦°à¦¯à¦¼à§‹à¦œà¦¨ à¦¬à¦¾ à¦¸à¦¹à¦¾à¦¯à¦¼à¦¤à¦¾à¦° à¦œà¦¨à§à¦¯ à¦•à¦² à¦•à¦°à§à¦¨: 01677234252';
   GlobalSettingsModel _globalSettings = GlobalSettingsModel();
   List<VehicleTypeModel> _vehicleTypeModels = [];
 
@@ -37,6 +43,9 @@ class DriverProvider extends ChangeNotifier {
   DriverProvider() {
     loadDrivers();
     _initFirestore();
+    GeoService.syncWithRemoteServer(
+      onUpdated: () => notifyListeners(),
+    );
   }
 
   void _initFirestore() {
@@ -115,213 +124,17 @@ class DriverProvider extends ChangeNotifier {
   String? get selectedUnion => _selectedUnion;
   String? get selectedWard => _selectedWard;
   bool get isBengali => _isBengali;
+  List<String> get unions => _unions;
+  bool get isLoadingUnions => _isLoadingUnions;
   bool get isUnityMode => _isUnityMode;
   String get noticeText => _noticeText;
   GlobalSettingsModel get globalSettings => _globalSettings;
   List<VehicleTypeModel> get vehicleTypeModels => _vehicleTypeModels;
 
   // Bangladesh Division -> District -> Upazila Geographic Mapping
-  static const Map<String, Map<String, List<String>>> geoHierarchy = {
-    'বরিশাল': {
-      'ভোলা': [
-        'বোরহানউদ্দিন',
-        'ভোলা সদর',
-        'দৌলতখান',
-        'লালমোহন',
-        'চরফ্যাশন',
-        'তজুমদ্দিন',
-        'মনপুরা',
-      ],
-      'বরিশাল': [
-        'বরিশাল সদর',
-        'বাকেরগঞ্জ',
-        'বাবুগঞ্জ',
-        'উজিরপুর',
-        'বানারীপাড়া',
-        'গৌরনদী',
-        'মুলাদী',
-        'মেহেন্দিগঞ্জ',
-        'হিজলা',
-      ],
-      'পটুয়াখালী': [
-        'পটুয়াখালী সদর',
-        'বাউফল',
-        'গলাচিপা',
-        'দশমিনা',
-        'কলাপাড়া',
-        'মির্জাগঞ্জ',
-        'দুমকি',
-        'রাঙ্গাবালী',
-      ],
-      'পিরোজপুর': [
-        'পিরোজপুর সদর',
-        'ভান্ডারিয়া',
-        'মঠবাড়িয়া',
-        'নাজিরপুর',
-        'কাউখালী',
-        'নেছারাবাদ',
-        'ইন্দুরকানী',
-      ],
-      'বরগুনা': [
-        'বরগুনা সদর',
-        'আমতলী',
-        'পাথরঘাটা',
-        'বেতাগী',
-        'বামনা',
-        'তালতলী',
-      ],
-      'ঝালকাঠি': [
-        'ঝালকাঠি সদর',
-        'নলছিটি',
-        'রাজাপুর',
-        'কাঠালিয়া',
-      ],
-    },
-    'ঢাকা': {
-      'ঢাকা': [
-        'ধামরাই',
-        'সাভার',
-        'মিরপুর',
-        'উত্তরা',
-        'গুলশান',
-        'কেরানীগঞ্জ',
-        'দোহার',
-        'নবাবগঞ্জ',
-      ],
-      'গাজীপুর': [
-        'টঙ্গী',
-        'গাজীপুর সদর',
-        'কালিয়াকৈর',
-        'শ্রীপুর',
-        'কাপাসিয়া',
-      ],
-      'নারায়ণগঞ্জ': [
-        'নারায়ণগঞ্জ সদর',
-        'রূপগঞ্জ',
-        'সোনারগাঁও',
-        'আড়াইহাজার',
-        'বন্দর',
-      ],
-      'টাঙ্গাইল': [
-        'টাঙ্গাইল সদর',
-        'মির্জাপুর',
-        'মধুপুর',
-        'ঘাটাইল',
-        'সখিপুর',
-        'গোপালপুর',
-        'নাগরপুর',
-      ],
-      'নরসিংদী': [
-        'নরসিংদী সদর',
-        'পলাশ',
-        'বেলাব',
-        'শিবপুর',
-        'রায়পুরা',
-        'মনোহরদী',
-      ],
-      'মুন্সিগঞ্জ': [
-        'মুন্সিগঞ্জ সদর',
-        'সিরাজদিখান',
-        'শ্রীনগর',
-        'টঙ্গীবাড়ী',
-        'গজারিয়া',
-        'লৌহজং',
-      ],
-      'মানিকগঞ্জ': [
-        'মানিকগঞ্জ সদর',
-        'সিংগাইর',
-        'সাটুরিয়া',
-        'শিবালয়',
-        'ঘিওর',
-        'দৌলতপুর',
-        'হরিরামপুর',
-      ],
-      'কিশোরগঞ্জ': [
-        'কিশোরগঞ্জ সদর',
-        'ভৈরব',
-        'বাজিতপুর',
-        'হোসেনপুর',
-        'কটিয়াদী',
-        'করিমগঞ্জ',
-      ],
-    },
-    'চট্টগ্রাম': {
-      'চট্টগ্রাম': [
-        'পতেঙ্গা',
-        'পাঁচলাইশ',
-        'পাহাড়তলী',
-        'কোতোয়ালী',
-        'সীতাকুণ্ড',
-        'মিরসরাই',
-        'হাটহাজারী',
-        'রাউজান',
-      ],
-      'কক্সবাজার': [
-        'কক্সবাজার সদর',
-        'টেকনাফ',
-        'উখিয়া',
-        'রামু',
-        'মহেশখালী',
-        'চকরিয়া',
-      ],
-      'কুমিল্লা': [
-        'কুমিল্লা সদর',
-        'লাকসাম',
-        'দাউদকান্দি',
-        'চৌদ্দগ্রাম',
-        'দেবীদ্বার',
-        'মুরাদনগর',
-      ],
-      'ফেনী': [
-        'ফেনী সদর',
-        'দাগনভূঞা',
-        'সোনাগাজী',
-        'ছাগলনাইয়া',
-      ],
-      'নোয়াখালী': [
-        'নোয়াখালী সদর',
-        'বেগমগঞ্জ',
-        'চাটখিল',
-        'কোম্পানীগঞ্জ',
-      ],
-      'চাঁদপুর': [
-        'চাঁদপুর সদর',
-        'হাজীগঞ্জ',
-        'মতলব',
-        'শাহরাস্তি',
-      ],
-    },
-    'রাজশাহী': {
-      'রাজশাহী': ['রাজশাহী সদর', 'বাঘা', 'চারঘাট', 'পুঠিয়া', 'গোদাগাড়ী'],
-      'বগুড়া': ['বগুড়া সদর', 'শেরপুর', 'শিবগঞ্জ', 'কাহালু', 'ধুনট'],
-      'পাবনা': ['পাবনা সদর', 'ঈশ্বরদী', 'সাঁথিয়া', 'সুজানগর', 'বেড়া'],
-      'সিরাজগঞ্জ': ['সিরাজগঞ্জ সদর', 'শাহজাদপুর', 'উল্লাপাড়া', 'বেলকুচি'],
-      'নাটোর': ['নাটোর সদর', 'সিংড়া', 'বড়াইগ্রাম', 'গুরুদাসপুর'],
-    },
-    'খুলনা': {
-      'খুলনা': ['খুলনা সদর', 'দৌলতপুর', 'খালিশপুর', 'ডুমুরিয়া', 'বটিয়াঘাটা'],
-      'যশোর': ['যশোর সদর', 'ঝিকরগাছা', 'অভয়নগর', 'কেশবপুর'],
-      'কুষ্টিয়া': ['কুষ্টিয়া সদর', 'কুমারখালী', 'ভেড়ামারা', 'মিরপুর'],
-      'সাতক্ষীরা': ['সাতক্ষীরা সদর', 'কালীগঞ্জ', 'শ্যামনগর'],
-    },
-    'সিলেট': {
-      'সিলেট': ['সিলেট সদর', 'বিয়ানীবাজার', 'গোলাপগঞ্জ', 'জৈন্তাপুর', 'বিশ্বনাথ'],
-      'মৌলভীবাজার': ['মৌলভীবাজার সদর', 'শ্রীমঙ্গল', 'কমলগঞ্জ', 'কুলাউড়া'],
-      'হবিগঞ্জ': ['হবিগঞ্জ সদর', 'মাধবপুর', 'চুনারুঘাট', 'নবীগঞ্জ'],
-      'সুনামগঞ্জ': ['সুনামগঞ্জ সদর', 'ছাতক', 'জগন্নাথপুর', 'তাহিরপুর'],
-    },
-    'রংপুর': {
-      'রংপুর': ['রংপুর সদর', 'বদরগঞ্জ', 'পীরগঞ্জ', 'মিঠাপুকুর'],
-      'দিনাজপুর': ['দিনাজপুর সদর', 'বীরগঞ্জ', 'বিরামপুর', 'পার্বতীপুর'],
-      'কুড়িগ্রাম': ['কুড়িগ্রাম সদর', 'নাগেশ্বরী', 'উলিপুর'],
-    },
-    'ময়মনসিংহ': {
-      'ময়মনসিংহ': ['ময়মনসিংহ সদর', 'ত্রিশাল', 'ভালুকা', 'মুক্তাগাছা', 'গফরগাঁও'],
-      'জামালপুর': ['জামালপুর সদর', 'মেলান্দহ', 'মাদারগঞ্জ', 'সরিষাবাড়ী'],
-      'শেরপুর': ['শেরপুর সদর', 'নকলা', 'নালিতাবাড়ী', 'শ্রীবরদী'],
-      'নেত্রকোণা': ['নেত্রকোণা সদর', 'কেন্দুয়া', 'পূর্বধলা', 'দুর্গাপুর'],
-    },
-  };
+  // Powered by GeoService (Offline-First Hive Cache + bangladesh.gov.bd dataset + Remote Sync)
+  static Map<String, Map<String, List<String>>> get geoHierarchy =>
+      GeoService.getHierarchy();
 
   // Preset Filter Options: Dynamic translation based on current language
   List<String> get vehicleTypes {
@@ -396,26 +209,24 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  // Predefined lists for registration screen dropdowns
-  List<String> get unions => [
-        'ধামরাই পৌরসভা',
-        'টঙ্গী পৌরসভা',
-        'সাভার পৌরসভা',
-        'বাঘিল ইউনিয়ন',
-        'পৌরসভা/ইউনিয়ন ১',
-        'পৌরসভা/ইউনিয়ন ২',
+        'à¦§à¦¾à¦®à¦°à¦¾à¦‡ à¦ªà§Œà¦°à¦¸à¦­à¦¾',
+        'à¦Ÿà¦™à§à¦—à§€ à¦ªà§Œà¦°à¦¸à¦­à¦¾',
+        'à¦¸à¦¾à¦­à¦¾à¦° à¦ªà§Œà¦°à¦¸à¦­à¦¾',
+        'à¦¬à¦¾à¦˜à¦¿à¦² à¦‡à¦‰à¦¨à¦¿à§Ÿà¦¨',
+        'à¦ªà§Œà¦°à¦¸à¦­à¦¾/à¦‡à¦‰à¦¨à¦¿à§Ÿà¦¨ à§§',
+        'à¦ªà§Œà¦°à¦¸à¦­à¦¾/à¦‡à¦‰à¦¨à¦¿à§Ÿà¦¨ à§¨',
       ];
 
   List<String> get wards => [
-        'ওয়ার্ড ১',
-        'ওয়ার্ড ২',
-        'ওয়ার্ড ৩',
-        'ওয়ার্ড ৪',
-        'ওয়ার্ড ৫',
-        'ওয়ার্ড ৬',
-        'ওয়ার্ড ৭',
-        'ওয়ার্ড ৮',
-        'ওয়ার্ড ৯',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§ª',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§«',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¬',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§­',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§®',
+        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¯',
       ];
 
   /// Filtered drivers getter
@@ -539,18 +350,51 @@ class DriverProvider extends ChangeNotifier {
     _selectedDivision = val;
     _selectedDistrict = null; // Reset child district
     _selectedUpazila = null;  // Reset child upazila
+    _selectedUnion = null;    // Reset union
+    _unions = [];             // Clear union list
+    _isLoadingUnions = false;
     notifyListeners();
   }
 
   void setDistrict(String? val) {
     _selectedDistrict = val;
     _selectedUpazila = null;  // Reset child upazila
+    _selectedUnion = null;    // Reset union
+    _unions = [];             // Clear union list
+    _isLoadingUnions = false;
     notifyListeners();
   }
 
   void setUpazila(String? val) {
     _selectedUpazila = val;
+    _selectedUnion = null; // Reset union when upazila changes
+    _unions = [];
+    // Fetch unions from BD API when upazila is selected
+    if (val != null &&
+        _selectedDivision != null &&
+        _selectedDistrict != null) {
+      _fetchUnions(val);
+    }
     notifyListeners();
+  }
+
+  /// Fetch union list from BD API for the currently selected upazila.
+  Future<void> _fetchUnions(String upazila) async {
+    _isLoadingUnions = true;
+    notifyListeners();
+    try {
+      _unions = await UnionApiService.getUnions(
+        divisionBn: _selectedDivision ?? '',
+        districtBn: _selectedDistrict ?? '',
+        upazilaName: upazila,
+      );
+    } catch (e) {
+      debugPrint('DriverProvider _fetchUnions error: $e');
+      _unions = [];
+    } finally {
+      _isLoadingUnions = false;
+      notifyListeners();
+    }
   }
 
   void setUnion(String? val) {

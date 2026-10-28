@@ -95,12 +95,17 @@ class FilterSectionWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
 
-                        // 5. Union / Municipality (Typeable text field)
+                        // 5. Union / Municipality (BD API dropdown)
                         Expanded(
-                          child: FilterInputField(
+                          child: FilterDropdown(
                             label: strings.filterUnion,
-                            hint: strings.filterUnionHint,
+                            hint: provider.isLoadingUnions
+                                ? (provider.isBengali ? 'লোড হচ্ছে...' : 'Loading...')
+                                : strings.filterUnionHint,
                             value: provider.selectedUnion,
+                            items: provider.unions,
+                            isEnabled: provider.selectedUpazila != null && !provider.isLoadingUnions,
+                            isLoading: provider.isLoadingUnions,
                             onChanged: (val) => provider.setUnion(val),
                           ),
                         ),
@@ -180,10 +185,15 @@ class FilterSectionWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: FilterInputField(
+                          child: FilterDropdown(
                             label: strings.filterUnion,
-                            hint: strings.filterUnionHint,
+                            hint: provider.isLoadingUnions
+                                ? (provider.isBengali ? 'লোড হচ্ছে...' : 'Loading...')
+                                : strings.filterUnionHint,
                             value: provider.selectedUnion,
+                            items: provider.unions,
+                            isEnabled: provider.selectedUpazila != null && !provider.isLoadingUnions,
+                            isLoading: provider.isLoadingUnions,
                             onChanged: (val) => provider.setUnion(val),
                           ),
                         ),

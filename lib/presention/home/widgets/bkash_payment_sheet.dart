@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/services/hive_service.dart';
+import '../../policy/policy_content.dart';
+import '../../policy/widgets/policy_dialog.dart';
 
 /// Authentic bKash Brand Colors
 class BkashColors {
@@ -431,7 +433,10 @@ class _BkashPaymentSheetState extends State<BkashPaymentSheet> {
 
                     // Footer Link / Terms
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => PolicyDialog.show(
+                        context,
+                        PolicyType.termsAndConditions,
+                      ),
                       child: RichText(
                         textAlign: TextAlign.center,
                         text: const TextSpan(

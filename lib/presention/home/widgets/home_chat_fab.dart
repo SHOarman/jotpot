@@ -1,13 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/providers/driver_provider.dart';
 import '../../../utils/app_theme.dart';
 
 class HomeChatFab extends StatelessWidget {
   const HomeChatFab({super.key});
 
-  Future<void> _callSupport() async {
-    final uri = Uri(scheme: 'tel', path: '01677234252');
+  Future<void> _callSupport(BuildContext context) async {
+    final phone = Provider.of<DriverProvider>(context, listen: false)
+        .globalSettings
+        .contactPhone;
+    final targetPhone = phone.isNotEmpty ? phone : '01677234252';
+    final uri = Uri(scheme: 'tel', path: targetPhone);
+
     try {
       if (kIsWeb) {
         await launchUrl(uri, webOnlyWindowName: '_self');
@@ -27,7 +34,7 @@ class HomeChatFab extends StatelessWidget {
       backgroundColor: AppColors.primaryOrange,
       shape: const CircleBorder(),
       elevation: 4,
-      onPressed: _callSupport,
+      onPressed: () => _callSupport(context),
       child: const Icon(
         Icons.chat_bubble_outline_rounded,
         color: Colors.white,

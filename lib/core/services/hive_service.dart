@@ -5,17 +5,41 @@ import '../models/note_model.dart';
 class HiveService {
   static const String _boxName = 'jotpot_drivers_box';
   static const String _paymentBoxName = 'jotpot_payment_prefs';
+  static const String _geoBoxName = 'jotpot_geo_cache';
   static Box? _box;
   static Box? _paymentBox;
+  static Box? _geoBox;
 
-  /// Initialize Hive and open driver directory and payment box
+  /// Initialize Hive and open driver directory, payment, and geo cache boxes
   static Future<void> init() async {
     await Hive.initFlutter();
     _box = await Hive.openBox(_boxName);
     _paymentBox = await Hive.openBox(_paymentBoxName);
+    _geoBox = await Hive.openBox(_geoBoxName);
     
     // Clear any previous mock/dummy data so only real Firestore data exists
     await _box!.clear();
+  }
+
+  /// Save geo hierarchy map to local cache
+  static Future<void> saveGeoHierarchy(Map<String, dynamic> data) async {
+    try {
+      _geoBox ??= await Hive.openBox(_geoBoxName);
+      await _geoBox!.put('geo_hierarchy', data);
+      await _geoBox!.put('geo_timestamp', DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {}
+  }
+
+  /// Retrieve cached geo hierarchy map from local storage
+  static Map<String, dynamic>? getCachedGeoHierarchy() {
+    try {
+      if (_geoBox == null) return null;
+      final raw = _geoBox!.get('geo_hierarchy');
+      if (raw is Map) {
+        return Map<String, dynamic>.from(raw);
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// Save last used bKash number for driver/user
