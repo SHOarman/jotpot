@@ -33,28 +33,28 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 1. Sleek Brand Orange Icon Badge
+            // 1. Sleek Brand Logo Badge
             Container(
-              padding: const EdgeInsets.all(22),
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primaryOrange, Color(0xFFF97316)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryOrange.withValues(alpha: 0.3),
+                    color: AppColors.primaryOrange.withValues(alpha: 0.18),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.directions_car_filled_rounded,
-                size: 64,
-                color: Colors.white,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 130,
+                  height: 130,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(height: 24),

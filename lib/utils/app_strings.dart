@@ -466,19 +466,25 @@ class AppStrings {
     'air ambulance': 'এয়ার অ্যাম্বুলেন্স',
     'microbus': 'মাইক্রোবাস',
     'micro bus': 'মাইক্রোবাস',
-    'hiace': 'হায়াস',
+    'hiace': 'হায়েস',
+    'hayes': 'হায়েস',
     'private car': 'প্রাইভেট কার',
     'car': 'কার',
     'cng': 'সিএনজি',
     'auto': 'অটো',
     'auto rickshaw': 'অটো',
     'easy bike': 'ইজি বাইক',
+    'easy bike / tomtom': 'ইজি বাইক / টমটম',
+    'easy bike/tomtom': 'ইজি বাইক / টমটম',
+    'tomtom': 'টমটম',
     'mishuk': 'মিশুক',
     'leguna': 'লেগুনা',
     'truck': 'ট্রাক',
     'pickup': 'পিকআপ',
     'pick up': 'পিকআপ',
     'bus': 'বাস',
+    'mini bus': 'মিনি বাস',
+    'minibus': 'মিনি বাস',
     'ambulance': 'অ্যাম্বুলেন্স',
     'self driving': 'সেলফ ড্রাইভিং',
     'boat': 'নৌকা',
@@ -505,6 +511,8 @@ class AppStrings {
     'এয়ার এ্যাম্বুলেন্স': 'Air Ambulance',
     'মাইক্রোবাস': 'Microbus',
     'মাইক্রো বাস': 'Microbus',
+    'হায়েস': 'Hiace',
+    'হায়েস': 'Hiace',
     'হায়াস': 'Hiace',
     'হায়াস': 'Hiace',
     'প্রাইভেট কার': 'Private Car',
@@ -515,12 +523,16 @@ class AppStrings {
     'অটোরিকশা': 'Auto',
     'ইজি বাইক': 'Easy Bike',
     'ইজিবাইক': 'Easy Bike',
+    'ইজি বাইক / টমটম': 'Easy Bike / Tomtom',
+    'টমটম': 'Tomtom',
     'মিশুক': 'Mishuk',
     'লেগুনা': 'Leguna',
     'ট্রাক': 'Truck',
     'পিকআপ': 'Pickup',
     'পিক আপ': 'Pickup',
     'বাস': 'Bus',
+    'মিনি বাস': 'Mini Bus',
+    'মিনিবাস': 'Mini Bus',
     'অ্যাম্বুলেন্স': 'Ambulance',
     'এ্যাম্বুলেন্স': 'Ambulance',
     'সেলফ ড্রাইভিং': 'Self Driving',
@@ -537,6 +549,12 @@ class AppStrings {
     final lower = clean.toLowerCase();
 
     if (toBengali) {
+      if (clean == 'হায়াস' || clean == 'হায়াস' || clean == 'হায়েস' || lower == 'hayes') {
+        return 'হায়েস';
+      }
+      if (lower == 'easy bike / tomtom' || lower == 'easy bike/tomtom') {
+        return 'ইজি বাইক / টমটম';
+      }
       if (enToBnVehicles.containsKey(lower)) {
         return enToBnVehicles[lower]!;
       }
@@ -837,6 +855,36 @@ class AppStrings {
   String get isAirAmbulance => isBn ? 'এয়ার অ্যাম্বুলেন্স' : 'Air Ambulance';
   String get isSelfDriving =>
       isBn ? 'সেলফ ড্রাইভিং (ড্রাইভার ছাড়া)' : 'Self Driving (Without driver)';
+
+  // Vehicle-specific Registration Form Strings
+  String get seatingCapacityLabel =>
+      isBn ? 'আসন সংখ্যা (Seating Capacity)' : 'Seating Capacity';
+  String get seatingCapacityPlaceholder =>
+      isBn ? 'যেমন: ২৫ জন, ৪০ জন' : 'e.g. 25 Persons, 40 Persons';
+  String get truckCoveredLabel =>
+      isBn ? 'গাড়ির কভার (Covered status)' : 'Covered status';
+  String get truckCoveredCheckbox =>
+      isBn ? 'আপনার কি Covered Truck? (হলে টিক দিন, না হলে দেওয়ার প্রয়োজন নেই)'
+           : 'Is your truck a Covered Truck? (Check if yes, leave unchecked if not)';
+  String get vehicleLengthLabel =>
+      isBn ? 'গাড়ি কত ফিট লম্বা? (Vehicle Length)' : 'Vehicle Length';
+  String get vehicleLengthPlaceholder =>
+      isBn ? 'যেমন: ৭ ফিট, ১২ ফিট' : 'e.g. 7 Feet, 12 Feet';
+  String get vehicleCapacityLabel =>
+      isBn ? 'গাড়ির ধারন ক্ষমতা (Capacity)' : 'Vehicle Capacity';
+  String get vehicleCapacityPlaceholder =>
+      isBn ? 'যেমন: ১ টন, ১.৫ টন' : 'e.g. 1 Ton, 1.5 Ton';
+  String get airAmbulanceLabel =>
+      isBn ? 'এয়ার অ্যাম্বুলেন্স হিসেবে ব্যবহৃত হবে? (Use as Air Ambulance?)'
+           : 'Use as Air Ambulance?';
+  String get airAmbulanceCheckbox =>
+      isBn ? 'হ্যাঁ, এয়ার অ্যাম্বুলেন্স (Yes)' : 'Yes, Air Ambulance';
+  String get drivingOptionLabel =>
+      isBn ? 'ড্রাইভিং অপশন (Driving Option)' : 'Driving Option';
+  String get drivingOptionCheckbox =>
+      isBn ? 'উইথআউট ড্রাইভার রেন্ট বা সেলফ ড্রাইভিং? (Rent without driver?)'
+           : 'Rent without driver / Self Driving?';
+
   String get registerNowBtn => isBn ? 'নিবন্ধন করুন' : 'Register Now';
   String get regSuccessSnackbar => isBn
       ? 'ড্রাইভার হিসেবে সফলভাবে নিবন্ধন করা হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষমান।'

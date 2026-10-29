@@ -65,8 +65,27 @@ class FirebaseService {
     bool isCovered = false,
     bool isAirAmbulance = false,
     bool isSelfDriving = false,
+    bool autoPay = false,
+    String seatingCapacity = '',
+    int? seatCount,
+    String vehicleLength = '',
+    String vehicleCapacity = '',
   }) async {
     final cleanPhone = phone.trim();
+
+    int? parsedSeatCount = seatCount;
+    if (parsedSeatCount == null && seatingCapacity.trim().isNotEmpty) {
+      String s = seatingCapacity;
+      const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      for (int i = 0; i < 10; i++) {
+        s = s.replaceAll(bn[i], '$i');
+      }
+      final match = RegExp(r'\d+').firstMatch(s);
+      if (match != null) {
+        parsedSeatCount = int.tryParse(match.group(0)!);
+      }
+    }
+
     // 1. Check duplicate phone
     final existing = await _db
         .collection('drivers')
@@ -93,6 +112,11 @@ class FirebaseService {
       'isCovered': isCovered,
       'isAirAmbulance': isAirAmbulance,
       'isSelfDriving': isSelfDriving,
+      'autoPay': autoPay,
+      'seatingCapacity': seatingCapacity.trim(),
+      'seatCount': parsedSeatCount,
+      'vehicleLength': vehicleLength.trim(),
+      'vehicleCapacity': vehicleCapacity.trim(),
       'isActive': false,
       'expiryDate': DateTime.now().add(Duration(days: durationDays)),
       'createdAt': FieldValue.serverTimestamp(),

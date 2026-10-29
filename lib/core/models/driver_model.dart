@@ -17,6 +17,12 @@ class DriverModel {
   final bool isActive;
   final bool autoPay;
   final String lastBkashNumber;
+  final bool isCovered;
+  final bool isAirAmbulance;
+  final bool isSelfDriving;
+  final String seatingCapacity;
+  final String vehicleLength;
+  final String vehicleCapacity;
 
   DriverModel({
     required this.id,
@@ -37,6 +43,12 @@ class DriverModel {
     this.isActive = true,
     this.autoPay = false,
     this.lastBkashNumber = '',
+    this.isCovered = false,
+    this.isAirAmbulance = false,
+    this.isSelfDriving = false,
+    this.seatingCapacity = '',
+    this.vehicleLength = '',
+    this.vehicleCapacity = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -53,6 +65,12 @@ class DriverModel {
       'address': address,
       'details': details,
       'seatCount': seatCount,
+      'seatingCapacity': seatingCapacity,
+      'vehicleLength': vehicleLength,
+      'vehicleCapacity': vehicleCapacity,
+      'isCovered': isCovered,
+      'isAirAmbulance': isAirAmbulance,
+      'isSelfDriving': isSelfDriving,
       'vehicleModel': vehicleModel,
       'vehicleRegNumber': vehicleRegNumber,
       'expiryDate': expiryDate?.toIso8601String(),
@@ -105,6 +123,22 @@ class DriverModel {
 
     final rawSeat =
         map['seatCount'] ?? map['seatingCapacity'] ?? map['capacity'];
+    int? parsedSeat;
+    if (rawSeat != null) {
+      if (rawSeat is int) {
+        parsedSeat = rawSeat;
+      } else {
+        String s = rawSeat.toString();
+        const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+        for (int i = 0; i < 10; i++) {
+          s = s.replaceAll(bn[i], '$i');
+        }
+        final match = RegExp(r'\d+').firstMatch(s);
+        if (match != null) {
+          parsedSeat = int.tryParse(match.group(0)!);
+        }
+      }
+    }
 
     DateTime? parsedExpiry;
     final rawExpiry = map['expiryDate'];
@@ -134,7 +168,7 @@ class DriverModel {
       ward: ward,
       address: address,
       details: details,
-      seatCount: rawSeat != null ? int.tryParse(rawSeat.toString()) : null,
+      seatCount: parsedSeat,
       vehicleModel: vehicleModel,
       vehicleRegNumber: vehicleRegNumber,
       expiryDate: parsedExpiry,
@@ -142,6 +176,12 @@ class DriverModel {
       autoPay: map['autoPay'] == true,
       lastBkashNumber:
           (map['lastBkashNumber'] ?? map['bkashNumber'] ?? '').toString(),
+      isCovered: map['isCovered'] == true,
+      isAirAmbulance: map['isAirAmbulance'] == true,
+      isSelfDriving: map['isSelfDriving'] == true,
+      seatingCapacity: (map['seatingCapacity'] ?? '').toString(),
+      vehicleLength: (map['vehicleLength'] ?? '').toString(),
+      vehicleCapacity: (map['vehicleCapacity'] ?? '').toString(),
     );
   }
 

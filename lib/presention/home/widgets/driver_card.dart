@@ -170,6 +170,67 @@ class DriverCard extends StatelessWidget {
                     label: strings.isBn ? 'আসন সংখ্যা' : 'Seats',
                     value: '${driver.seatCount}',
                   ),
+                ] else if (driver.seatingCapacity.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.event_seat_rounded,
+                    color: AppColors.infoTeal,
+                    label: strings.isBn ? 'আসন সংখ্যা' : 'Seats',
+                    value: driver.seatingCapacity,
+                  ),
+                ],
+
+                // ── Truck Features ───────────────────────────────────────
+                if (driver.isCovered) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.local_shipping_rounded,
+                    color: const Color(0xFF6366F1),
+                    label: strings.isBn ? 'গাড়ির কভার' : 'Covered Status',
+                    value: strings.isBn ? 'কাভার্ড ট্রাক (Covered Truck)' : 'Covered Truck',
+                  ),
+                ],
+                if (driver.vehicleLength.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.straighten_rounded,
+                    color: const Color(0xFF0284C7),
+                    label: strings.isBn ? 'গাড়ির দৈর্ঘ্য' : 'Vehicle Length',
+                    value: driver.vehicleLength,
+                  ),
+                ],
+                if (driver.vehicleCapacity.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.fitness_center_rounded,
+                    color: const Color(0xFF0D9488),
+                    label: strings.isBn ? 'ধারন ক্ষমতা' : 'Capacity',
+                    value: driver.vehicleCapacity,
+                  ),
+                ],
+
+                // ── Air Ambulance Feature ────────────────────────────────
+                if (driver.isAirAmbulance) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.medical_services_rounded,
+                    color: const Color(0xFFDC2626),
+                    label: strings.isBn ? 'এয়ার অ্যাম্বুলেন্স' : 'Air Ambulance',
+                    value: strings.isBn ? 'হ্যাঁ, এয়ার অ্যাম্বুলেন্স' : 'Yes, Air Ambulance',
+                  ),
+                ],
+
+                // ── Self Driving / Rent Feature ──────────────────────────
+                if (driver.isSelfDriving) ...[
+                  const SizedBox(height: 14),
+                  _detailRow(
+                    icon: Icons.key_rounded,
+                    color: const Color(0xFFEA580C),
+                    label: strings.isBn ? 'ড্রাইভিং অপশন' : 'Driving Option',
+                    value: strings.isBn
+                        ? 'সেলফ ড্রাইভিং / ড্রাইভার ছাড়া রেন্ট'
+                        : 'Self Driving / Rent without driver',
+                  ),
                 ],
 
                 // ── Notes / Address (read-only text area) ─────────────────

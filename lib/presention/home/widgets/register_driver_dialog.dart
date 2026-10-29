@@ -18,11 +18,22 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
+  final _scrollController = ScrollController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _modelController = TextEditingController();
   final _registrationNoController = TextEditingController();
   final _wardController = TextEditingController();
+
+  // Dynamic vehicle-specific controllers
+  final _seatingCapacityController = TextEditingController();
+  final _vehicleLengthController = TextEditingController();
+  final _vehicleCapacityController = TextEditingController();
+
+  // Feature checkboxes
+  bool _isCoveredTruck = false;
+  bool _isAirAmbulance = false;
+  bool _isSelfDriving = false;
 
   // Selection states
   String? _selectedVehicle;
@@ -36,6 +47,39 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   List<String> _availableUnions = [];
   bool _isLoadingUnions = false;
 
+  bool get _isBusOrMiniBus {
+    if (_selectedVehicle == null) return false;
+    final v = _selectedVehicle!.trim().toLowerCase();
+    final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    return v.contains('বাস') ||
+        v.contains('মিনি বাস') ||
+        v.contains('মিনিবাস') ||
+        en.contains('bus');
+  }
+
+  bool get _isTruck {
+    if (_selectedVehicle == null) return false;
+    final v = _selectedVehicle!.trim().toLowerCase();
+    final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    return v.contains('ট্রাক') || en.contains('truck');
+  }
+
+  bool get _isHelicopter {
+    if (_selectedVehicle == null) return false;
+    final v = _selectedVehicle!.trim().toLowerCase();
+    final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    return v.contains('হেলিকপ্টার') || en.contains('helicopter');
+  }
+
+  bool get _isMotorcycle {
+    if (_selectedVehicle == null) return false;
+    final v = _selectedVehicle!.trim().toLowerCase();
+    final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    return (v.contains('মোটরসাইকেল') || v.contains('মোটর সাইকেল') || en == 'motorcycle') &&
+        !v.contains('ইজি বাইক') &&
+        !v.contains('ইজিবাইক');
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -43,6 +87,10 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     _modelController.dispose();
     _registrationNoController.dispose();
     _wardController.dispose();
+    _seatingCapacityController.dispose();
+    _vehicleLengthController.dispose();
+    _vehicleCapacityController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -93,6 +141,11 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
       setState(() => _isSubmitting = true);
 
       try {
+        final isBusOrMini = _isBusOrMiniBus;
+        final isTrk = _isTruck;
+        final isHeli = _isHelicopter;
+        final isMoto = _isMotorcycle;
+
         await FirebaseService.registerDriver(
           name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -105,6 +158,15 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           union: _selectedUnion ?? '',
           ward: _wardController.text.trim(),
           transactionId: '',
+          autoPay: false,
+          isCovered: isTrk ? _isCoveredTruck : false,
+          isAirAmbulance: isHeli ? _isAirAmbulance : false,
+          isSelfDriving: isMoto ? _isSelfDriving : false,
+          seatingCapacity: (isBusOrMini || isHeli)
+              ? _seatingCapacityController.text.trim()
+              : '',
+          vehicleLength: isTrk ? _vehicleLengthController.text.trim() : '',
+          vehicleCapacity: isTrk ? _vehicleCapacityController.text.trim() : '',
         );
 
         if (!mounted) return;
@@ -203,6 +265,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                 // Scrollable Form Body
                 Flexible(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -264,7 +327,79 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                           ),
                           const SizedBox(height: 14),
 
-                          const SizedBox(height: 18),
+                          // Dynamic Vehicle-specific fields based on selection
+                          // 1. Bus / Mini Bus
+                          if (_isBusOrMiniBus) ...[
+                            _buildFieldLabel(strings.seatingCapacityLabel),
+                            const SizedBox(height: 6),
+                            _buildTextInput(
+                              controller: _seatingCapacityController,
+                              hint: strings.seatingCapacityPlaceholder,
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // 2. Truck
+                          if (_isTruck) ...[
+                            _buildFieldLabel(strings.truckCoveredLabel),
+                            const SizedBox(height: 6),
+                            _buildCheckboxBox(
+                              value: _isCoveredTruck,
+                              text: strings.truckCoveredCheckbox,
+                              onChanged: (val) =>
+                                  setState(() => _isCoveredTruck = val),
+                            ),
+                            const SizedBox(height: 14),
+                            _buildFieldLabel(strings.vehicleLengthLabel),
+                            const SizedBox(height: 6),
+                            _buildTextInput(
+                              controller: _vehicleLengthController,
+                              hint: strings.vehicleLengthPlaceholder,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildFieldLabel(strings.vehicleCapacityLabel),
+                            const SizedBox(height: 6),
+                            _buildTextInput(
+                              controller: _vehicleCapacityController,
+                              hint: strings.vehicleCapacityPlaceholder,
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // 3. Helicopter
+                          if (_isHelicopter) ...[
+                            _buildFieldLabel(strings.seatingCapacityLabel),
+                            const SizedBox(height: 6),
+                            _buildTextInput(
+                              controller: _seatingCapacityController,
+                              hint: strings.seatingCapacityPlaceholder,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildFieldLabel(strings.airAmbulanceLabel),
+                            const SizedBox(height: 6),
+                            _buildCheckboxBox(
+                              value: _isAirAmbulance,
+                              text: strings.airAmbulanceCheckbox,
+                              onChanged: (val) =>
+                                  setState(() => _isAirAmbulance = val),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // 4. Motorcycle
+                          if (_isMotorcycle) ...[
+                            _buildFieldLabel(strings.drivingOptionLabel),
+                            const SizedBox(height: 6),
+                            _buildCheckboxBox(
+                              value: _isSelfDriving,
+                              text: strings.drivingOptionCheckbox,
+                              onChanged: (val) =>
+                                  setState(() => _isSelfDriving = val),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          const SizedBox(height: 6),
 
                           // 6. অবস্থান (Location Section)
                           Text(
@@ -616,6 +751,55 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                 }).toList()
               : null,
           onChanged: active ? onChanged : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckboxBox({
+    required bool value,
+    required String text,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Checkbox(
+                value: value,
+                onChanged: (v) => onChanged(v ?? false),
+                activeColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                side: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF334155),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

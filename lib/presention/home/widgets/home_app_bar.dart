@@ -24,29 +24,40 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       titleSpacing: 16,
-      title: RichText(
-        text: const TextSpan(
-          children: [
-            TextSpan(
-              text: 'JOT',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textDark,
-                letterSpacing: 0.5,
-              ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/logo.png',
+            height: 36,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 8),
+          RichText(
+            text: const TextSpan(
+              children: [
+                TextSpan(
+                  text: 'JOT',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textDark,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                TextSpan(
+                  text: 'POT',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryOrange,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
-            TextSpan(
-              text: 'POT',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: AppColors.primaryOrange,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       actions: [
 
