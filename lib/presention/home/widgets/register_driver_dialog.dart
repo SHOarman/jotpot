@@ -51,10 +51,13 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     if (_selectedVehicle == null) return false;
     final v = _selectedVehicle!.trim().toLowerCase();
     final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
-    return v.contains('বাস') ||
+    if (v.contains('মাইক্রোবাস') || v.contains('মাইক্রো বাস') || en.contains('micro')) return false;
+    return v == 'বাস' ||
         v.contains('মিনি বাস') ||
         v.contains('মিনিবাস') ||
-        en.contains('bus');
+        en == 'bus' ||
+        en == 'mini bus' ||
+        en == 'minibus';
   }
 
   bool get _isTruck {
@@ -141,10 +144,6 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
       setState(() => _isSubmitting = true);
 
       try {
-        final isBusOrMini = _isBusOrMiniBus;
-        final isTrk = _isTruck;
-        final isHeli = _isHelicopter;
-        final isMoto = _isMotorcycle;
 
         await FirebaseService.registerDriver(
           name: _nameController.text.trim(),
@@ -159,16 +158,13 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           ward: _wardController.text.trim(),
           transactionId: '',
           autoPay: false,
-          isCovered: isTrk ? _isCoveredTruck : false,
-          isAirAmbulance: isHeli ? _isAirAmbulance : false,
-          isSelfDriving: isMoto ? _isSelfDriving : false,
-          seatingCapacity: (isBusOrMini || isHeli)
-              ? _seatingCapacityController.text.trim()
-              : '',
-          vehicleLength: isTrk ? _vehicleLengthController.text.trim() : '',
-          vehicleCapacity: isTrk ? _vehicleCapacityController.text.trim() : '',
+          isCovered: _isCoveredTruck,
+          isAirAmbulance: _isAirAmbulance,
+          isSelfDriving: _isSelfDriving,
+          seatingCapacity: _seatingCapacityController.text.trim(),
+          vehicleLength: _vehicleLengthController.text.trim(),
+          vehicleCapacity: _vehicleCapacityController.text.trim(),
         );
-
         if (!mounted) return;
         Navigator.of(context).pop();
 
@@ -304,7 +300,23 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                             value: _selectedVehicle,
                             items: provider.vehicleTypes,
                             onChanged: (val) {
-                              setState(() => _selectedVehicle = val);
+                              setState(() {
+                                _selectedVehicle = val;
+                                if (!_isTruck) {
+                                  _isCoveredTruck = false;
+                                  _vehicleLengthController.clear();
+                                  _vehicleCapacityController.clear();
+                                }
+                                if (!_isBusOrMiniBus && !_isHelicopter) {
+                                  _seatingCapacityController.clear();
+                                }
+                                if (!_isHelicopter) {
+                                  _isAirAmbulance = false;
+                                }
+                                if (!_isMotorcycle) {
+                                  _isSelfDriving = false;
+                                }
+                              });
                             },
                           ),
                           const SizedBox(height: 14),

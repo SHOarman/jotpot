@@ -351,6 +351,39 @@ class DriverCard extends StatelessWidget {
     );
   }
 
+  Widget _buildCardChip({
+    required IconData icon,
+    required Color color,
+    required String text,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.28),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _buildLocationText(
       AppStrings strings, String locUpazila, String locDistrict) {
     final parts = <String>[];
@@ -376,6 +409,79 @@ class DriverCard extends StatelessWidget {
 
     final displayDetails = driver.getLocalizedDetails(isBn: strings.isBn);
 
+    // Vehicle Specific Features (Seat count, Truck specs, Air Ambulance, Self Driving)
+    final featureChips = <Widget>[];
+
+    // A. Seat Count / Seating Capacity
+    final seatVal = (driver.seatCount != null && driver.seatCount! > 0)
+        ? '${driver.seatCount}'
+        : driver.seatingCapacity.trim();
+    if (seatVal.isNotEmpty) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.event_seat_rounded,
+          color: AppColors.infoTeal,
+          text: '${strings.seatingCountPrefix}$seatVal',
+        ),
+      );
+    }
+
+    // B. Truck Covered Status
+    if (driver.isCovered) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.local_shipping_rounded,
+          color: const Color(0xFF6366F1),
+          text: strings.isBn ? 'কাভার্ড ট্রাক' : 'Covered Truck',
+        ),
+      );
+    }
+
+    // C. Truck Vehicle Length
+    if (driver.vehicleLength.trim().isNotEmpty) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.straighten_rounded,
+          color: const Color(0xFF0284C7),
+          text: '${strings.isBn ? "দৈর্ঘ্য: " : "Length: "}${driver.vehicleLength.trim()}',
+        ),
+      );
+    }
+
+    // D. Truck Vehicle Capacity
+    if (driver.vehicleCapacity.trim().isNotEmpty) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.fitness_center_rounded,
+          color: const Color(0xFF0D9488),
+          text: '${strings.isBn ? "ধারণ ক্ষমতা: " : "Capacity: "}${driver.vehicleCapacity.trim()}',
+        ),
+      );
+    }
+
+    // E. Helicopter Air Ambulance
+    if (driver.isAirAmbulance) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.medical_services_rounded,
+          color: const Color(0xFFDC2626),
+          text: strings.isBn ? 'এয়ার অ্যাম্বুলেন্স' : 'Air Ambulance',
+        ),
+      );
+    }
+
+    // F. Motorcycle Self Driving
+    if (driver.isSelfDriving) {
+      featureChips.add(
+        _buildCardChip(
+          icon: Icons.key_rounded,
+          color: const Color(0xFFEA580C),
+          text: strings.isBn
+              ? 'সেলফ ড্রাইভিং / রেন্ট'
+              : 'Self Driving / Rent',
+        ),
+      );
+    }
     return GestureDetector(
       onTap: () => _showDetailDialog(context),
       child: Container(
@@ -475,40 +581,17 @@ class DriverCard extends StatelessWidget {
               ],
             ),
 
-            // 4. Seat Count Row (if present)
-            if (driver.seatCount != null && driver.seatCount! > 0) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: AppColors.infoTeal,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: const Icon(
-                      Icons.info,
-                      color: Colors.white,
-                      size: 13,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${strings.seatingCountPrefix}${driver.seatCount}',
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        color: AppColors.textBody,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+            // 4. Vehicle Specific Features Badges (if any)
+            if (featureChips.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: featureChips,
               ),
             ],
 
             const SizedBox(height: 18),
-
             // 5. Full-Width Vibrant Orange Call Button
             SizedBox(
               width: double.infinity,
