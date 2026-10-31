@@ -55,7 +55,14 @@ class GlobalSettingsModel {
       paymentInstructions: instructions.isNotEmpty
           ? instructions
           : 'Please send the payment via bkash/nagad to jotpot personal account: 01677234297',
-      automatedPayment: map['automatedPayment'] == true,
+      automatedPayment: map['automatedPayment'] == true ||
+          map['automatedPayment'] == 'true' ||
+          map['automatedPayment'] == 1 ||
+          map['automatedGateway'] == true ||
+          map['automatedGateway'] == 'true' ||
+          map['isAutomated'] == true ||
+          map['paymentMethod'] == 'automated' ||
+          map['paymentMethod'] == 'gateway',
       paymentGatewayName: (map['paymentGatewayName'] ?? 'bkash').toString(),
       discount3Months: (map['discount3Months'] as num?) ?? 0,
       discount6Months: (map['discount6Months'] as num?) ?? 0,

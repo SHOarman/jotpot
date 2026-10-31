@@ -244,8 +244,8 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
       }
     }
 
-    final bool requiresPayment = (vType?.monthlyFee ?? 300) > 0;
-    final num monthlyFee = vType?.monthlyFee ?? 300;
+    final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
+    final num monthlyFee = vType?.monthlyFee ?? 0;
     final num vehicleDiscount = vType?.discountValue ?? 0;
     final String discountType = vType?.discountType ?? 'percentage';
 
@@ -474,6 +474,25 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
     required AppStrings strings,
   }) {
     final driver = _foundDriver!;
+    final num monthlyFee = vType?.monthlyFee ?? 0;
+    final num vehicleDiscount = vType?.discountValue ?? 0;
+    final String discountType = vType?.discountType ?? 'percentage';
+
+    int getAmountFor(int days, num durDiscount) {
+      if (!requiresPayment) return 0;
+      return FirebaseService.calculateRenewalAmount(
+        monthlyFee: monthlyFee,
+        durationDays: days,
+        vehicleDiscount: vehicleDiscount,
+        discountType: discountType,
+        durationDiscount: durDiscount,
+      );
+    }
+
+    final fee1M = getAmountFor(30, 0);
+    final fee3M = getAmountFor(90, settings.discount3Months);
+    final fee6M = getAmountFor(180, settings.discount6Months);
+    final fee1Y = getAmountFor(365, settings.discount1Year);
     // Expiry calculation
     int remainingDays = 0;
     bool isExpired = true;
@@ -674,19 +693,35 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
                           items: [
                             DropdownMenuItem(
                               value: 30,
-                              child: Text(strings.duration1Month),
+                              child: Text(
+                                strings.isBn
+                                    ? '১ মাস (৩০ দিন) - $fee1M ৳'
+                                    : '1 Month (30 days) - $fee1M Tk',
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 90,
-                              child: Text(strings.duration3Months),
+                              child: Text(
+                                strings.isBn
+                                    ? '৩ মাস (৯০ দিন) - $fee3M ৳${settings.discount3Months > 0 ? " (${settings.discount3Months}% ছাড়)" : ""}'
+                                    : '3 Months (90 days) - $fee3M Tk${settings.discount3Months > 0 ? " (${settings.discount3Months}% off)" : ""}',
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 180,
-                              child: Text(strings.duration6Months),
+                              child: Text(
+                                strings.isBn
+                                    ? '৬ মাস (১৮০ দিন) - $fee6M ৳${settings.discount6Months > 0 ? " (${settings.discount6Months}% ছাড়)" : ""}'
+                                    : '6 Months (180 days) - $fee6M Tk${settings.discount6Months > 0 ? " (${settings.discount6Months}% off)" : ""}',
+                              ),
                             ),
                             DropdownMenuItem(
                               value: 365,
-                              child: Text(strings.duration1Year),
+                              child: Text(
+                                strings.isBn
+                                    ? '১ বছর (৩৬৫ দিন) - $fee1Y ৳${settings.discount1Year > 0 ? " (${settings.discount1Year}% ছাড়)" : ""}'
+                                    : '1 Year (365 days) - $fee1Y Tk${settings.discount1Year > 0 ? " (${settings.discount1Year}% off)" : ""}',
+                              ),
                             ),
                           ],
                           onChanged: (val) {
@@ -769,380 +804,527 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
           ),
           const SizedBox(height: 14),
 
-          // --- bKash Automatic Payment Card ---
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: BkashColors.lightBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: BkashColors.borderPink),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const BkashLogoBadge(size: 26, isWhite: false),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _isBkashSaved
-                            ? const Color(0xFFDCFCE7)
-                            : const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        _isBkashSaved
-                            ? '✓ ${strings.bkashSavedBadge}'
-                            : strings.bkashDriverBadge,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.bold,
-                          color: _isBkashSaved
-                              ? const Color(0xFF15803D)
-                              : const Color(0xFF1D4ED8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Recipient Account
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.account_balance_wallet_outlined,
-                          size: 16, color: BkashColors.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${strings.bkashMerchantAccount}: 01677234297',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Clipboard.setData(
-                              const ClipboardData(text: '01677234297'));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '01677234297 - ${strings.copiedToClipboard}'),
-                              backgroundColor: BkashColors.primary,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: BkashColors.lightBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Icon(Icons.copy_rounded,
-                              size: 13, color: BkashColors.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Payment bKash Number (Auto-filled & Editable)
-                Text(
-                  strings.bkashAccountLabel,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  height: 46,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.phone_android_rounded,
-                        size: 18,
-                        color: BkashColors.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _bkashController,
-                          keyboardType: TextInputType.phone,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
-                          ),
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: '01XXXXXXXXX',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  strings.savedBkashNotice,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Primary Pay with bKash Button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: BkashColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          // Check if Automated Payment Gateway is ON or OFF in Admin Dashboard
+          if (settings.automatedPayment) ...[
+            // --- bKash Automatic Payment Card ---
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: BkashColors.lightBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: BkashColors.borderPink),
               ),
-              onPressed: _isSubmitting
-                  ? null
-                  : () => _openBkashPaymentModal(
-                        calculatedAmount: calculatedAmount,
-                        strings: strings,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BkashLogoBadge(size: 26, isWhite: false),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _isBkashSaved
+                              ? const Color(0xFFDCFCE7)
+                              : const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          _isBkashSaved
+                              ? '✓ ${strings.bkashSavedBadge}'
+                              : strings.bkashDriverBadge,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: _isBkashSaved
+                                ? const Color(0xFF15803D)
+                                : const Color(0xFF1D4ED8),
+                          ),
+                        ),
                       ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3.0,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Recipient Account
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                    ),
+                    child: Row(
                       children: [
-                        const CustomPaint(
-                          size: Size(18, 18),
-                          painter: BkashBirdPainter(color: Colors.white),
+                        const Icon(Icons.account_balance_wallet_outlined,
+                            size: 16, color: BkashColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${strings.bkashMerchantAccount}: 01677234297',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(
+                                const ClipboardData(text: '01677234297'));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '01677234297 - ${strings.copiedToClipboard}'),
+                                backgroundColor: BkashColors.primary,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: BkashColors.lightBg,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(Icons.copy_rounded,
+                                size: 13, color: BkashColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Payment bKash Number (Auto-filled & Editable)
+                  Text(
+                    strings.bkashAccountLabel,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.phone_android_rounded,
+                          size: 18,
+                          color: BkashColors.primary,
                         ),
                         const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _bkashController,
+                            keyboardType: TextInputType.phone,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              hintText: '01XXXXXXXXX',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    strings.savedBkashNotice,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Primary Pay with bKash Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: BkashColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _openBkashPaymentModal(
+                          calculatedAmount: calculatedAmount,
+                          strings: strings,
+                        ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3.0,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CustomPaint(
+                            size: Size(18, 18),
+                            painter: BkashBirdPainter(color: Colors.white),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            strings.payWithBkashBtn(calculatedAmount),
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Toggle for manual Trx ID entry
+            Center(
+              child: InkWell(
+                onTap: () => setState(() => _showManualTrx = !_showManualTrx),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _showManualTrx
+                            ? 'ম্যানুয়াল ট্রানজেকশন আইডি লুকান'
+                            : 'অথবা আগে টাকা পাঠালে TrxID লিখুন',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _showManualTrx
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            if (_showManualTrx) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
                         Text(
-                          strings.payWithBkashBtn(calculatedAmount),
+                          strings.transactionIdLabel,
                           style: const TextStyle(
-                            fontSize: 14.5,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const Text(
+                          ' *',
+                          style: TextStyle(
+                            color: Colors.redAccent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Toggle for manual Trx ID entry
-          Center(
-            child: InkWell(
-              onTap: () => setState(() => _showManualTrx = !_showManualTrx),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _showManualTrx
-                          ? 'ম্যানুয়াল ট্রানজেকশন আইডি লুকান'
-                          : 'অথবা আগে টাকা পাঠালে TrxID লিখুন',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: TextField(
+                        controller: _trxController,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: strings.transactionIdPlaceholder,
+                          hintStyle: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _showManualTrx
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: const Color(0xFF64748B),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 42,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: BkashColors.primary),
+                          foregroundColor: BkashColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => _submitRenewal(
+                                  amount: calculatedAmount,
+                                  requiresPayment: true,
+                                  strings: strings,
+                                ),
+                        child: Text(
+                          strings.submitRenewalRequest,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
-
-          if (_showManualTrx) ...[
-            const SizedBox(height: 10),
+            ],
+          ] else ...[
+            // --- MANUAL PAYMENT SYSTEM (When Automated Gateway is OFF in Admin Dashboard) ---
             Container(
-              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Text(
-                        strings.transactionIdLabel,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      const Text(
-                        ' *',
-                        style: TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.bold,
+                      const Icon(Icons.payment_rounded,
+                          size: 18, color: Color(0xFFD97706)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          strings.isBn ? 'পেমেন্ট নির্দেশাবলী' : 'Payment Instructions',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF92400E),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: TextField(
-                      controller: _trxController,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: strings.transactionIdPlaceholder,
-                        hintStyle: const TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF94A3B8),
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    settings.paymentInstructions,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF78350F),
+                      height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 42,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: BkashColors.primary),
-                        foregroundColor: BkashColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  // Copy account button
+                  InkWell(
+                    onTap: () {
+                      final pNum = RegExp(r'01\d{9}').firstMatch(settings.paymentInstructions)?.group(0) ?? '01677234297';
+                      Clipboard.setData(ClipboardData(text: pNum));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$pNum - ${strings.copiedToClipboard}'),
+                          backgroundColor: const Color(0xFFD97706),
+                          duration: const Duration(seconds: 2),
                         ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
                       ),
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => _submitRenewal(
-                                amount: calculatedAmount,
-                                requiresPayment: true,
-                                strings: strings,
-                              ),
-                      child: Text(
-                        strings.submitRenewalRequest,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFD97706)),
+                          const SizedBox(width: 6),
+                          Text(
+                            strings.isBn ? 'অ্যাকাউন্ট নম্বর কপি করুন' : 'Copy Account Number',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ],
+            const SizedBox(height: 14),
 
-        if (isUnlimited) ...[
-          // Complete Free Renewal Button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryOrange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            // TrxID Input Field (Required)
+            Row(
+              children: [
+                Text(
+                  strings.transactionIdLabel,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const Text(
+                  ' *',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              alignment: Alignment.centerLeft,
+              child: TextField(
+                controller: _trxController,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: strings.transactionIdPlaceholder,
+                  hintStyle: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
               ),
-              onPressed: _isSubmitting
-                  ? null
-                  : () => _submitRenewal(
-                        amount: 0,
-                        requiresPayment: false,
-                        strings: strings,
-                      ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3.0,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      strings.completeRenewal,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
 
+            // Submit Renewal Request Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryOrange,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        if (_trxController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(strings.isBn
+                                  ? 'অনুগ্রহ করে ট্রানজেকশন আইডি (TrxID) লিখুন'
+                                  : 'Please enter transaction ID (TrxID)'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+                        _submitRenewal(
+                          amount: calculatedAmount,
+                          requiresPayment: true,
+                          strings: strings,
+                        );
+                      },
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3.0,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        strings.isBn
+                            ? 'পেমেন্ট তথ্য সাবমিট ও নবায়ন করুন'
+                            : 'Submit Payment & Renew',
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ],
         if (_submitError != null) ...[
           const SizedBox(height: 12),
           Container(

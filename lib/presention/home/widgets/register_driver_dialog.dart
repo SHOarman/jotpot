@@ -7,6 +7,10 @@ import '../../../core/services/union_api_service.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import '../../../core/models/vehicle_type_model.dart';
+import '../../../core/models/global_settings_model.dart';
+import 'bkash_payment_sheet.dart';
 class RegisterDriverDialog extends StatefulWidget {
   const RegisterDriverDialog({super.key});
 
@@ -25,6 +29,9 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   final _registrationNoController = TextEditingController();
   final _wardController = TextEditingController();
 
+  int _selectedDurationDays = 30;
+  final _transactionIdController = TextEditingController();
+  final _paymentPhoneController = TextEditingController();
   // Dynamic vehicle-specific controllers
   final _seatingCapacityController = TextEditingController();
   final _vehicleLengthController = TextEditingController();
@@ -94,6 +101,8 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     _vehicleLengthController.dispose();
     _vehicleCapacityController.dispose();
     _scrollController.dispose();
+    _transactionIdController.dispose();
+    _paymentPhoneController.dispose();
     super.dispose();
   }
 
@@ -141,10 +150,67 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         return;
       }
 
+      final provider = Provider.of<DriverProvider>(context, listen: false);
+      final settings = provider.globalSettings;
+
+      // Find VehicleTypeModel
+      VehicleTypeModel? vType;
+      if (provider.vehicleTypeModels.isNotEmpty) {
+        final matches = provider.vehicleTypeModels.where(
+          (v) =>
+              v.name.toLowerCase().trim() == _selectedVehicle!.toLowerCase().trim() ||
+              AppStrings.areSameVehicleType(v.name, _selectedVehicle!),
+        );
+        if (matches.isNotEmpty) {
+          vType = matches.first;
+        }
+      }
+
+      final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
+      final num monthlyFee = vType?.monthlyFee ?? 0;
+      final num vehicleDiscount = vType?.discountValue ?? 0;
+      final String discountType = vType?.discountType ?? 'percentage';
+
+      num durationDiscount = 0;
+      if (_selectedDurationDays == 90) {
+        durationDiscount = settings.discount3Months;
+      } else if (_selectedDurationDays == 180) {
+        durationDiscount = settings.discount6Months;
+      } else if (_selectedDurationDays == 365) {
+        durationDiscount = settings.discount1Year;
+      }
+
+      final int calculatedAmount = requiresPayment
+          ? FirebaseService.calculateRenewalAmount(
+              monthlyFee: monthlyFee,
+              durationDays: _selectedDurationDays,
+              vehicleDiscount: vehicleDiscount,
+              discountType: discountType,
+              durationDiscount: durationDiscount,
+            )
+          : 0;
+
+      // Validate payment if required
+      if (requiresPayment) {
+        if (!settings.automatedPayment) {
+          if (_transactionIdController.text.trim().isEmpty) {
+            setState(() => _validationError = strings.isBn
+                ? 'অনুগ্রহ করে পেমেন্টের ট্রানজেকশন আইডি (TrxID) লিখুন!'
+                : 'Please enter transaction ID (TrxID)!');
+            return;
+          }
+        } else {
+          if (_transactionIdController.text.trim().isEmpty) {
+            setState(() => _validationError = strings.isBn
+                ? 'অনুগ্রহ করে প্রথমে বিকাশ দিয়ে পেমেন্ট সম্পন্ন করুন!'
+                : 'Please complete payment via bKash first!');
+            return;
+          }
+        }
+      }
       setState(() => _isSubmitting = true);
 
       try {
-
         await FirebaseService.registerDriver(
           name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -156,8 +222,12 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
           upazila: _selectedUpazila ?? '',
           union: _selectedUnion ?? '',
           ward: _wardController.text.trim(),
-          transactionId: '',
-          autoPay: false,
+          transactionId: requiresPayment
+              ? _transactionIdController.text.trim()
+              : 'FREE_REGISTRATION',
+          durationDays: requiresPayment ? _selectedDurationDays : 3650,
+          amount: calculatedAmount,
+          autoPay: settings.automatedPayment,
           isCovered: _isCoveredTruck,
           isAirAmbulance: _isAirAmbulance,
           isSelfDriving: _isSelfDriving,
@@ -583,6 +653,17 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                             ),
                           ),
 
+                          // 7. পেমেন্ট তথ্য (Payment Information Section)
+                          if (_selectedVehicle != null) ...[
+                            const SizedBox(height: 16),
+                            _buildPaymentSection(
+                              context: context,
+                              strings: strings,
+                              settings: provider.globalSettings,
+                              provider: provider,
+                            ),
+                          ],
+
                           if (_validationError != null) ...[
                             const SizedBox(height: 10),
                             Text(
@@ -813,6 +894,574 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  Widget _buildPaymentSection({
+    required BuildContext context,
+    required AppStrings strings,
+    required GlobalSettingsModel settings,
+    required DriverProvider provider,
+  }) {
+    // Find VehicleTypeModel
+    VehicleTypeModel? vType;
+    if (_selectedVehicle != null && provider.vehicleTypeModels.isNotEmpty) {
+      final matches = provider.vehicleTypeModels.where(
+        (v) =>
+            v.name.toLowerCase().trim() == _selectedVehicle!.toLowerCase().trim() ||
+            AppStrings.areSameVehicleType(v.name, _selectedVehicle!),
+      );
+      if (matches.isNotEmpty) {
+        vType = matches.first;
+      }
+    }
+
+    final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
+    final num monthlyFee = vType?.monthlyFee ?? 0;
+    final num vehicleDiscount = vType?.discountValue ?? 0;
+    final String discountType = vType?.discountType ?? 'percentage';
+
+    num durationDiscount = 0;
+    if (_selectedDurationDays == 90) {
+      durationDiscount = settings.discount3Months;
+    } else if (_selectedDurationDays == 180) {
+      durationDiscount = settings.discount6Months;
+    } else if (_selectedDurationDays == 365) {
+      durationDiscount = settings.discount1Year;
+    }
+
+    final int calculatedAmount = requiresPayment
+        ? FirebaseService.calculateRenewalAmount(
+            monthlyFee: monthlyFee,
+            durationDays: _selectedDurationDays,
+            vehicleDiscount: vehicleDiscount,
+            discountType: discountType,
+            durationDiscount: durationDiscount,
+          )
+        : 0;
+
+    int getAmountFor(int days, num durDiscount) {
+      if (!requiresPayment) return 0;
+      return FirebaseService.calculateRenewalAmount(
+        monthlyFee: monthlyFee,
+        durationDays: days,
+        vehicleDiscount: vehicleDiscount,
+        discountType: discountType,
+        durationDiscount: durDiscount,
+      );
+    }
+
+    final fee1M = getAmountFor(30, 0);
+    final fee3M = getAmountFor(90, settings.discount3Months);
+    final fee6M = getAmountFor(180, settings.discount6Months);
+    final fee1Y = getAmountFor(365, settings.discount1Year);
+
+    if (!requiresPayment) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFBBF7D0)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                strings.isBn
+                    ? 'এই গাড়ির ধরন নিবন্ধনের জন্য কোনো ফি প্রযোজ্য নয় (সম্পূর্ণ ফ্রি লাইসেন্স)।'
+                    : 'No registration fee required for this vehicle (Free License).',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF15803D),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final phoneNum = RegExp(r'01\d{9}').firstMatch(settings.paymentInstructions)?.group(0) ?? '01677234297';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Title
+          Text(
+            strings.isBn ? 'পেমেন্ট তথ্য (Payment Information)' : 'Payment Information',
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF92400E),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            strings.isBn
+                ? '${_selectedVehicle ?? ""} এর জন্য মাসিক ফি $monthlyFee টাকা।'
+                : 'Monthly fee for ${_selectedVehicle ?? ""}: $monthlyFee Tk.',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFB45309),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Duration & Amount Row
+          Row(
+            children: [
+              // Duration Dropdown
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      strings.isBn ? 'সাবস্ক্রিপশনের মেয়াদ' : 'Subscription Duration',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 46,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      alignment: Alignment.center,
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _selectedDurationDays,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: 30,
+                              child: Text(strings.isBn ? '১ মাস (৩০ দিন) - $fee1M ৳' : '1 Month (30 days) - $fee1M Tk'),
+                            ),
+                            DropdownMenuItem(
+                              value: 90,
+                              child: Text(strings.isBn ? '৩ মাস (৯০ দিন) - $fee3M ৳${settings.discount3Months > 0 ? " (${settings.discount3Months}% ছাড়)" : ""}' : '3 Months (90 days) - $fee3M Tk'),
+                            ),
+                            DropdownMenuItem(
+                              value: 180,
+                              child: Text(strings.isBn ? '৬ মাস (১৮০ দিন) - $fee6M ৳${settings.discount6Months > 0 ? " (${settings.discount6Months}% ছাড়)" : ""}' : '6 Months (180 days) - $fee6M Tk'),
+                            ),
+                            DropdownMenuItem(
+                              value: 365,
+                              child: Text(strings.isBn ? '১ বছর (৩৬৫ দিন) - $fee1Y ৳${settings.discount1Year > 0 ? " (${settings.discount1Year}% ছাড়)" : ""}' : '1 Year (365 days) - $fee1Y Tk'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedDurationDays = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Amount to Pay
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      strings.isBn ? 'পরিশোধের পরিমাণ' : 'Amount to Pay',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 46,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '$calculatedAmount টাকা',
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Payment Mode: Automated vs Manual
+          if (settings.automatedPayment) ...[
+            // --- bKash Automatic Payment Card ---
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: BkashColors.lightBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: BkashColors.borderPink),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BkashLogoBadge(size: 26, isWhite: false),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          strings.bkashDriverBadge,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1D4ED8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Recipient Merchant Account
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet_outlined,
+                            size: 16, color: BkashColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${strings.bkashMerchantAccount}: 01677234297',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(
+                                const ClipboardData(text: '01677234297'));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '01677234297 - ${strings.copiedToClipboard}'),
+                                backgroundColor: BkashColors.primary,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: BkashColors.lightBg,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(Icons.copy_rounded,
+                                size: 13, color: BkashColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Payment bKash Number (Auto-filled & Editable)
+                  Text(
+                    strings.bkashAccountLabel,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.phone_android_rounded,
+                          size: 18,
+                          color: BkashColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _paymentPhoneController,
+                            keyboardType: TextInputType.phone,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              hintText: _phoneController.text.isNotEmpty
+                                  ? _phoneController.text
+                                  : '01XXXXXXXXX',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    strings.savedBkashNotice,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+
+                  if (_transactionIdController.text.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF86EFAC)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded,
+                              color: Color(0xFF16A34A), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '✓ বিকাশ পেমেন্ট সম্পন্ন! TrxID: ${_transactionIdController.text}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Primary Pay with bKash Button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: BkashColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  final phone = _paymentPhoneController.text.trim().isNotEmpty
+                      ? _paymentPhoneController.text.trim()
+                      : _phoneController.text.trim();
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (ctx) => BkashPaymentSheet(
+                      amount: calculatedAmount,
+                      defaultPhone: phone,
+                      driverId: 'new_registration',
+                      driverName: _nameController.text.trim(),
+                      driverPhone: _phoneController.text.trim(),
+                      onPaymentComplete: (trxId, bkashNum) {
+                        setState(() {
+                          _transactionIdController.text = trxId;
+                          _paymentPhoneController.text = bkashNum;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('বিকাশ পেমেন্ট সফল হয়েছে! TrxID: $trxId'),
+                            backgroundColor: const Color(0xFF16A34A),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CustomPaint(
+                      size: Size(18, 18),
+                      painter: BkashBirdPainter(color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _transactionIdController.text.isNotEmpty
+                          ? 'পেমেন্ট সম্পন্ন (পুনরায় পে করতে ক্লিক করুন)'
+                          : strings.payWithBkashBtn(calculatedAmount),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            // Manual Payment Instructions & TrxID field (matching Image 2)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    settings.paymentInstructions,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF78350F),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: phoneNum));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$phoneNum - ${strings.copiedToClipboard}'),
+                          backgroundColor: const Color(0xFFD97706),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.copy_rounded, size: 14, color: Color(0xFFD97706)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$phoneNum (${strings.isBn ? 'নম্বর কপি করুন' : 'Copy Number'})',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // TrxID Input Field
+            Text(
+              '${strings.isBn ? "ট্রানজেকশন আইডি (Transaction ID)" : "Transaction ID"} *',
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              alignment: Alignment.centerLeft,
+              child: TextField(
+                controller: _transactionIdController,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: 'e.g. 8N7A6B5C4D',
+                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
