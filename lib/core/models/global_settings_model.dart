@@ -21,6 +21,13 @@ class GlobalSettingsModel {
   final String aboutUsCustomBn;
   final String aboutUsCustomEn;
 
+  // Dynamic Footer & Policy Titles (from admin)
+  final String footerCopyright;
+  final String footerAboutText;
+  final String privacyPolicyTitle;
+  final String termsConditionsTitle;
+  final String aboutUsTitle;
+
   GlobalSettingsModel({
     this.paymentInstructions =
         'Please send the payment via bkash/nagad to jotpot personal account: 01677234297',
@@ -40,6 +47,11 @@ class GlobalSettingsModel {
     this.termsConditionsCustomEn = '',
     this.aboutUsCustomBn = '',
     this.aboutUsCustomEn = '',
+    this.footerCopyright = '',
+    this.footerAboutText = '',
+    this.privacyPolicyTitle = '',
+    this.termsConditionsTitle = '',
+    this.aboutUsTitle = '',
   });
 
   factory GlobalSettingsModel.fromMap(Map<String, dynamic> map) {
@@ -93,6 +105,32 @@ class GlobalSettingsModel {
           .toString()
           .trim(),
       aboutUsCustomEn: (map['aboutUsEn'] ?? map['aboutUsCustomEn'] ?? '')
+          .toString()
+          .trim(),
+      footerCopyright: (map['footerCopyright'] ??
+              map['footerCopyrightBn'] ??
+              map['copyrightText'] ??
+              '')
+          .toString()
+          .trim(),
+      footerAboutText: (map['footerAboutText'] ??
+              map['footerAboutTextBn'] ??
+              '')
+          .toString()
+          .trim(),
+      privacyPolicyTitle: (map['privacyPolicyTitleBn'] ??
+              map['privacyPolicyTitle'] ??
+              '')
+          .toString()
+          .trim(),
+      termsConditionsTitle: (map['termsConditionsTitleBn'] ??
+              map['termsConditionsTitle'] ??
+              '')
+          .toString()
+          .trim(),
+      aboutUsTitle: (map['aboutUsTitleBn'] ??
+              map['aboutUsTitle'] ??
+              '')
           .toString()
           .trim(),
     );

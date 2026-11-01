@@ -100,7 +100,7 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            strings.footerAboutText,
+                            (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText),
                             style: const TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 14,
@@ -222,21 +222,21 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           _FooterInteractiveLink(
-                            text: strings.footerPrivacyPolicy,
+                            text: (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy),
                             isUnderlined: true,
                             onTap: () => _openPolicy(
                                 context, PolicyType.privacyPolicy),
                           ),
                           const SizedBox(height: 10),
                           _FooterInteractiveLink(
-                            text: strings.footerAboutUs,
+                            text: (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs),
                             isUnderlined: true,
                             onTap: () =>
                                 _openPolicy(context, PolicyType.aboutUs),
                           ),
                           const SizedBox(height: 10),
                           _FooterInteractiveLink(
-                            text: strings.footerTermsConditions,
+                            text: (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions),
                             isUnderlined: true,
                             onTap: () => _openPolicy(
                                 context, PolicyType.termsAndConditions),
@@ -285,7 +285,7 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  strings.footerAboutText,
+                  (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText),
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 14,
@@ -352,20 +352,20 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _FooterInteractiveLink(
-                  text: strings.footerPrivacyPolicy,
+                  text: (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy),
                   isUnderlined: true,
                   onTap: () =>
                       _openPolicy(context, PolicyType.privacyPolicy),
                 ),
                 const SizedBox(height: 8),
                 _FooterInteractiveLink(
-                  text: strings.footerAboutUs,
+                  text: (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs),
                   isUnderlined: true,
                   onTap: () => _openPolicy(context, PolicyType.aboutUs),
                 ),
                 const SizedBox(height: 8),
                 _FooterInteractiveLink(
-                  text: strings.footerTermsConditions,
+                  text: (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions),
                   isUnderlined: true,
                   onTap: () =>
                       _openPolicy(context, PolicyType.termsAndConditions),
@@ -381,7 +381,7 @@ class HomeFooterWidget extends StatelessWidget {
               // Copyright (always centered)
               Center(
                 child: Text(
-                  strings.footerCopyright,
+                  (settings.footerCopyright.isNotEmpty ? settings.footerCopyright : strings.footerCopyright),
                   style: const TextStyle(
                     color: AppColors.textHint,
                     fontSize: 13,
