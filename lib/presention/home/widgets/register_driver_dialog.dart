@@ -156,13 +156,16 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
       // Find VehicleTypeModel
       VehicleTypeModel? vType;
       if (provider.vehicleTypeModels.isNotEmpty) {
-        final matches = provider.vehicleTypeModels.where(
-          (v) =>
-              v.name.toLowerCase().trim() == _selectedVehicle!.toLowerCase().trim() ||
-              AppStrings.areSameVehicleType(v.name, _selectedVehicle!),
-        );
-        if (matches.isNotEmpty) {
-          vType = matches.first;
+        final target = _selectedVehicle!.trim().toLowerCase();
+        for (final v in provider.vehicleTypeModels) {
+          final vName = v.name.trim().toLowerCase();
+          final vBn = v.bnName.trim().toLowerCase();
+          if (vName == target || vBn == target ||
+              AppStrings.areSameVehicleType(v.name, _selectedVehicle!) ||
+              AppStrings.areSameVehicleType(v.bnName, _selectedVehicle!)) {
+            vType = v;
+            break;
+          }
         }
       }
 
@@ -906,13 +909,16 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     // Find VehicleTypeModel
     VehicleTypeModel? vType;
     if (_selectedVehicle != null && provider.vehicleTypeModels.isNotEmpty) {
-      final matches = provider.vehicleTypeModels.where(
-        (v) =>
-            v.name.toLowerCase().trim() == _selectedVehicle!.toLowerCase().trim() ||
-            AppStrings.areSameVehicleType(v.name, _selectedVehicle!),
-      );
-      if (matches.isNotEmpty) {
-        vType = matches.first;
+      final target = _selectedVehicle!.trim().toLowerCase();
+      for (final v in provider.vehicleTypeModels) {
+        final vName = v.name.trim().toLowerCase();
+        final vBn = v.bnName.trim().toLowerCase();
+        if (vName == target || vBn == target ||
+            AppStrings.areSameVehicleType(v.name, _selectedVehicle!) ||
+            AppStrings.areSameVehicleType(v.bnName, _selectedVehicle!)) {
+          vType = v;
+          break;
+        }
       }
     }
 

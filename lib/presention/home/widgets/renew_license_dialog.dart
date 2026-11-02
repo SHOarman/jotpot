@@ -233,14 +233,16 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
     // Find vehicle type info
     VehicleTypeModel? vType;
     if (_foundDriver != null && provider.vehicleTypeModels.isNotEmpty) {
-      final matches = provider.vehicleTypeModels.where(
-        (v) =>
-            v.name.toLowerCase().trim() ==
-                _foundDriver!.vehicleType.toLowerCase().trim() ||
-            AppStrings.areSameVehicleType(v.name, _foundDriver!.vehicleType),
-      );
-      if (matches.isNotEmpty) {
-        vType = matches.first;
+      final target = _foundDriver!.vehicleType.trim().toLowerCase();
+      for (final v in provider.vehicleTypeModels) {
+        final vName = v.name.trim().toLowerCase();
+        final vBn = v.bnName.trim().toLowerCase();
+        if (vName == target || vBn == target ||
+            AppStrings.areSameVehicleType(v.name, _foundDriver!.vehicleType) ||
+            AppStrings.areSameVehicleType(v.bnName, _foundDriver!.vehicleType)) {
+          vType = v;
+          break;
+        }
       }
     }
 
@@ -493,19 +495,32 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
     final fee3M = getAmountFor(90, settings.discount3Months);
     final fee6M = getAmountFor(180, settings.discount6Months);
     final fee1Y = getAmountFor(365, settings.discount1Year);
-    // Expiry calculation
+// Expiry calculation
     int remainingDays = 0;
     bool isExpired = true;
-    bool isUnlimited = !requiresPayment;
+    bool isUnlimited = false;
 
-    if (driver.expiryDate != null) {
-      final now = DateTime.now();
-      if (driver.expiryDate!.isAfter(now)) {
-        remainingDays = driver.expiryDate!.difference(now).inDays + 1;
-        isExpired = false;
-      }
-      if (driver.expiryDate!.year > 2090) {
-        isUnlimited = true;
+    if (!requiresPayment) {
+      // Vehicle has NO subscription fee in Admin Dashboard
+      isUnlimited = true;
+      isExpired = false;
+    } else {
+      // Vehicle requires subscription fee
+      isUnlimited = false;
+      if (driver.expiryDate != null) {
+        final now = DateTime.now();
+        if (driver.expiryDate!.year > 2090) {
+          // If previously set to 2099 but vehicle has fee, show durationDays or 90 days
+          remainingDays = driver.durationDays > 0 ? driver.durationDays : 90;
+          isExpired = false;
+        } else if (driver.expiryDate!.isAfter(now)) {
+          remainingDays = driver.expiryDate!.difference(now).inDays + 1;
+          isExpired = false;
+        } else {
+          isExpired = true;
+        }
+      } else {
+        isExpired = true;
       }
     }
 

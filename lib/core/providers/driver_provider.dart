@@ -229,6 +229,13 @@ class DriverProvider extends ChangeNotifier {
   /// Filtered drivers getter
   List<DriverModel> get filteredDrivers {
     final list = _drivers.where((driver) {
+      if (!driver.isActive) return false;
+      final isAllFree = _globalSettings?.allVehiclesFree == true;
+      if (!isAllFree && driver.expiryDate != null && driver.expiryDate!.year <= 2090) {
+        if (driver.expiryDate!.isBefore(DateTime.now())) {
+          return false;
+        }
+      }
       final matchesSearch = _searchQuery.isEmpty ||
           driver.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           driver.address.toLowerCase().contains(_searchQuery.toLowerCase()) ||

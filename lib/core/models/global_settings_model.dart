@@ -7,6 +7,7 @@ class GlobalSettingsModel {
   final num discount1Year;
   final bool showLiveBanner;
   final String liveBannerText;
+  final bool allVehiclesFree;
 
   // Dynamic Contact & Info
   final String contactPhone;
@@ -38,6 +39,7 @@ class GlobalSettingsModel {
     this.discount1Year = 0,
     this.showLiveBanner = false,
     this.liveBannerText = '',
+    this.allVehiclesFree = false,
     this.contactPhone = '01677234252',
     this.contactEmail = 'support@jotpot.com',
     this.contactAddress = 'Tangail / Dhaka, Bangladesh',
@@ -81,6 +83,7 @@ class GlobalSettingsModel {
       discount1Year: (map['discount1Year'] as num?) ?? 0,
       showLiveBanner: map['showLiveBanner'] == true,
       liveBannerText: (map['liveBannerText'] ?? '').toString(),
+      allVehiclesFree: map['allVehiclesFree'] == true || map['allVehiclesFree'] == 'true',
       contactPhone: phone.isNotEmpty ? phone : '01677234252',
       contactEmail: email.isNotEmpty ? email : 'support@jotpot.com',
       contactAddress:

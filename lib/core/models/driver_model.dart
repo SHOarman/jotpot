@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class DriverModel {
   final String id;
   final String name;
@@ -14,6 +16,7 @@ class DriverModel {
   final String vehicleModel;
   final String vehicleRegNumber;
   final DateTime? expiryDate;
+  final int durationDays;
   final bool isActive;
   final bool autoPay;
   final String lastBkashNumber;
@@ -40,6 +43,7 @@ class DriverModel {
     this.vehicleModel = '',
     this.vehicleRegNumber = '',
     this.expiryDate,
+    this.durationDays = 30,
     this.isActive = true,
     this.autoPay = false,
     this.lastBkashNumber = '',
@@ -74,6 +78,7 @@ class DriverModel {
       'vehicleModel': vehicleModel,
       'vehicleRegNumber': vehicleRegNumber,
       'expiryDate': expiryDate?.toIso8601String(),
+      'durationDays': durationDays,
       'isActive': isActive,
       'autoPay': autoPay,
       'lastBkashNumber': lastBkashNumber,
@@ -145,14 +150,38 @@ class DriverModel {
     if (rawExpiry != null) {
       if (rawExpiry is DateTime) {
         parsedExpiry = rawExpiry;
-      } else if (rawExpiry.runtimeType.toString().contains('Timestamp')) {
+      } else if (rawExpiry is Timestamp) {
+        parsedExpiry = rawExpiry.toDate();
+      } else {
         try {
           parsedExpiry = (rawExpiry as dynamic).toDate();
         } catch (_) {}
-      } else if (rawExpiry is String) {
-        parsedExpiry = DateTime.tryParse(rawExpiry);
-      } else if (rawExpiry is int) {
-        parsedExpiry = DateTime.fromMillisecondsSinceEpoch(rawExpiry);
+
+        if (parsedExpiry == null && rawExpiry is Map) {
+          final sec = rawExpiry['seconds'] ??
+              rawExpiry['_seconds'] ??
+              rawExpiry['seconds_'];
+          if (sec != null) {
+            final secInt =
+                (sec is num) ? sec.toInt() : int.tryParse(sec.toString());
+            if (secInt != null) {
+              parsedExpiry =
+                  DateTime.fromMillisecondsSinceEpoch(secInt * 1000);
+            }
+          }
+        }
+
+        if (parsedExpiry == null && rawExpiry is String) {
+          parsedExpiry = DateTime.tryParse(rawExpiry);
+        } else if (parsedExpiry == null && rawExpiry is num) {
+          final numVal = rawExpiry.toInt();
+          if (numVal < 10000000000) {
+            parsedExpiry =
+                DateTime.fromMillisecondsSinceEpoch(numVal * 1000);
+          } else {
+            parsedExpiry = DateTime.fromMillisecondsSinceEpoch(numVal);
+          }
+        }
       }
     }
 
@@ -172,6 +201,7 @@ class DriverModel {
       vehicleModel: vehicleModel,
       vehicleRegNumber: vehicleRegNumber,
       expiryDate: parsedExpiry,
+      durationDays: (map['durationDays'] as num?)?.toInt() ?? 30,
       isActive: map['isActive'] == null ? true : map['isActive'] == true,
       autoPay: map['autoPay'] == true,
       lastBkashNumber:
