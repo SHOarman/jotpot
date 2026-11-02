@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get_connect/connect.dart';
 import '../data/bangladesh_geo_data.dart';
 import 'hive_service.dart';
 
@@ -10,6 +10,7 @@ class GeoService {
       BangladeshGeoData.officialGeoHierarchy;
 
   static bool _hasLoadedFromCache = false;
+  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _locationsSubscription;
 
   /// Get current administrative hierarchy (Divisions -> Districts -> Upazilas/Thanas)
   static Map<String, Map<String, List<String>>> getHierarchy() {
@@ -63,31 +64,7 @@ class GeoService {
       debugPrint('GeoService Firestore sync skipped: $e');
     }
 
-    // B. Check open government mirror API (BD Geo Data)
-    if (!updated) {
-      try {
-        final client = GetConnect(timeout: const Duration(seconds: 4));
-        // Open data mirror for Bangladesh administrative units
-        final response = await client.get(
-          'https://raw.githubusercontent.com/nuhil/bangladesh-geojson/master/bangladesh-upazila-hierarchy.json',
-        );
-
-        if (response.isOk && response.body is Map) {
-          final rawMap = Map<String, dynamic>.from(response.body);
-          final parsed = _convertDynamicMap(rawMap);
-          if (parsed.isNotEmpty) {
-            _currentGeoHierarchy = parsed;
-            await HiveService.saveGeoHierarchy(rawMap);
-            updated = true;
-            debugPrint('GeoService: Synced from remote open geo API.');
-          }
-        }
-      } catch (e) {
-        debugPrint(
-          'GeoService remote server unreachable (using local cache): $e',
-        );
-      }
-    }
+    // B. Open geo data mirror skipped (CORS safe, using local official GeoHierarchy)
 
     // Always ensure local cache has the latest hierarchy stored for future offline runs
     if (!updated) {
@@ -101,6 +78,36 @@ class GeoService {
 
     if (updated && onUpdated != null) {
       onUpdated();
+    }
+  }
+
+  /// 3. Real-time Firestore listener for instant live sync when Admin adds/removes locations
+  static void listenToRemoteUpdates({VoidCallback? onUpdated}) {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        _locationsSubscription?.cancel();
+        _locationsSubscription = FirebaseFirestore.instance
+            .collection('settings')
+            .doc('locations')
+            .snapshots()
+            .listen((doc) {
+          if (doc.exists && doc.data() != null) {
+            final parsed = _convertDynamicMap(doc.data()!);
+            if (parsed.isNotEmpty) {
+              _currentGeoHierarchy = parsed;
+              HiveService.saveGeoHierarchy(doc.data()!);
+              if (onUpdated != null) {
+                onUpdated();
+              }
+              debugPrint('GeoService: Live real-time update synced from settings/locations.');
+            }
+          }
+        }, onError: (e) {
+          debugPrint('GeoService live listener error: $e');
+        });
+      }
+    } catch (e) {
+      debugPrint('GeoService live listener skipped: $e');
     }
   }
 

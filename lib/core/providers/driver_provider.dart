@@ -8,11 +8,13 @@ import '../services/firebase_service.dart';
 import '../services/geo_service.dart';
 import '../services/hive_service.dart';
 import '../services/union_api_service.dart';
+import '../data/bangladesh_unions_data.dart';
 import '../../utils/app_strings.dart';
 
 class DriverProvider extends ChangeNotifier {
   List<DriverModel> _drivers = [];
   bool _isLoading = false;
+  int _searchCycleCounter = 0;
 
   // Search & Filters
   String _searchQuery = '';
@@ -44,6 +46,9 @@ class DriverProvider extends ChangeNotifier {
     loadDrivers();
     _initFirestore();
     GeoService.syncWithRemoteServer(
+      onUpdated: () => notifyListeners(),
+    );
+    GeoService.listenToRemoteUpdates(
       onUpdated: () => notifyListeners(),
     );
   }
@@ -223,7 +228,7 @@ class DriverProvider extends ChangeNotifier {
 
   /// Filtered drivers getter
   List<DriverModel> get filteredDrivers {
-    return _drivers.where((driver) {
+    final list = _drivers.where((driver) {
       final matchesSearch = _searchQuery.isEmpty ||
           driver.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           driver.address.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -262,14 +267,51 @@ class DriverProvider extends ChangeNotifier {
           driver.district == _selectedDistrict ||
           AppStrings.areSameDistrict(driver.district, _selectedDistrict!);
 
-      final matchesUpazila = _selectedUpazila == null ||
-          driver.upazila == _selectedUpazila ||
-          AppStrings.areSameUpazila(driver.upazila, _selectedUpazila!);
+      final selUpa = _selectedUpazila != null ? BangladeshUnionsData.normalizeBn(_selectedUpazila!) : null;
+      final dUpa = BangladeshUnionsData.normalizeBn(driver.upazila);
 
-      final matchesUnion = _selectedUnion == null ||
-          _selectedUnion!.trim().isEmpty ||
-          driver.union.toLowerCase().contains(_selectedUnion!.trim().toLowerCase()) ||
-          driver.address.toLowerCase().contains(_selectedUnion!.trim().toLowerCase());
+      final matchesUpazila = selUpa == null ||
+          selUpa.isEmpty ||
+          dUpa == selUpa ||
+          AppStrings.areSameUpazila(driver.upazila, _selectedUpazila!) ||
+          (dUpa.isNotEmpty && (dUpa.contains(selUpa) || selUpa.contains(dUpa)));
+
+      bool matchesUnion = true;
+      if (_selectedUnion != null && _selectedUnion!.trim().isNotEmpty) {
+        final sel = BangladeshUnionsData.normalizeBn(_selectedUnion!);
+        final dUnion = BangladeshUnionsData.normalizeBn(driver.union);
+        final dAddr = BangladeshUnionsData.normalizeBn(driver.address);
+        final dWard = BangladeshUnionsData.normalizeBn(driver.ward);
+
+        final isPourashavaFilter = BangladeshUnionsData.isPourashava(sel);
+
+        if (isPourashavaFilter) {
+          final pouroBase = sel.replaceAll('পৌরসভা', '').trim();
+          final isExplicitRuralUnion = dUnion.isNotEmpty &&
+              !BangladeshUnionsData.isPourashava(dUnion) &&
+              !dUnion.contains('ওয়ার্ড') &&
+              !dUnion.contains('ward') &&
+              (pouroBase.isEmpty || !dUnion.contains(pouroBase));
+
+          if (isExplicitRuralUnion) {
+            matchesUnion = false;
+          } else {
+            matchesUnion = dUnion.contains('পৌরসভা') ||
+                dUnion.contains('pouro') ||
+                dUnion.contains('সিটি কর্পোরেশন') ||
+                (pouroBase.isNotEmpty && dUnion.contains(pouroBase)) ||
+                (pouroBase.isNotEmpty && dAddr.contains(pouroBase)) ||
+                dAddr.contains('পৌরসভা') ||
+                dWard.contains('পৌরসভা') ||
+                dWard.isNotEmpty ||
+                dUnion.isEmpty;
+          }
+        } else {
+          matchesUnion = (dUnion.isNotEmpty && (dUnion.contains(sel) || sel.contains(dUnion))) ||
+              dAddr.contains(sel) ||
+              dWard.contains(sel);
+        }
+      }
 
       final matchesWard = _selectedWard == null ||
           _selectedWard!.trim().isEmpty ||
@@ -284,6 +326,24 @@ class DriverProvider extends ChangeNotifier {
           matchesUnion &&
           matchesWard;
     }).toList();
+
+    if (list.length <= 1) return list;
+
+    // Fair Rotation & Dynamic Swapping:
+    // Ensures that when multiple drivers are registered in the same location/vehicle category,
+    // the top position dynamically swaps/alternates so every driver gets turns at the top (1st place)
+    // both across searches and across 5-minute time slots.
+    final now = DateTime.now();
+    final timeSlot = (now.millisecondsSinceEpoch ~/ (1000 * 60 * 5));
+    final rotationOffset = (timeSlot + _searchCycleCounter) % list.length;
+
+    if (rotationOffset > 0) {
+      return [
+        ...list.sublist(rotationOffset),
+        ...list.sublist(0, rotationOffset),
+      ];
+    }
+    return list;
   }
 
   /// Load drivers (empty until Firestore emits real data)
@@ -330,16 +390,19 @@ class DriverProvider extends ChangeNotifier {
   // Setters for filters
   void setSearchQuery(String query) {
     _searchQuery = query;
+    _searchCycleCounter++;
     notifyListeners();
   }
 
   void setVehicleType(String? val) {
     _selectedVehicleType = val;
+    _searchCycleCounter++;
     notifyListeners();
   }
 
   void setDivision(String? val) {
     _selectedDivision = val;
+    _searchCycleCounter++;
     _selectedDistrict = null; // Reset child district
     _selectedUpazila = null;  // Reset child upazila
     _selectedUnion = null;    // Reset union
@@ -350,6 +413,7 @@ class DriverProvider extends ChangeNotifier {
 
   void setDistrict(String? val) {
     _selectedDistrict = val;
+    _searchCycleCounter++;
     _selectedUpazila = null;  // Reset child upazila
     _selectedUnion = null;    // Reset union
     _unions = [];             // Clear union list
@@ -359,12 +423,11 @@ class DriverProvider extends ChangeNotifier {
 
   void setUpazila(String? val) {
     _selectedUpazila = val;
+    _searchCycleCounter++;
     _selectedUnion = null; // Reset union when upazila changes
     _unions = [];
     // Fetch unions from BD API when upazila is selected
-    if (val != null &&
-        _selectedDivision != null &&
-        _selectedDistrict != null) {
+    if (val != null) {
       _fetchUnions(val);
     }
     notifyListeners();
@@ -391,11 +454,13 @@ class DriverProvider extends ChangeNotifier {
 
   void setUnion(String? val) {
     _selectedUnion = val;
+    _searchCycleCounter++;
     notifyListeners();
   }
 
   void setWard(String? val) {
     _selectedWard = val;
+    _searchCycleCounter++;
     notifyListeners();
   }
 

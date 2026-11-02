@@ -33,31 +33,14 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 1. Sleek Brand Logo Badge
-            Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryOrange.withValues(alpha: 0.18),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 130,
-                  height: 130,
-                  fit: BoxFit.cover,
-                ),
-              ),
+            // 1. Sleek Brand Car Pin Logo
+            Image.asset(
+              'assets/images/splash_logo.png',
+              width: 150,
+              height: 100,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // 2. JOT (Black) & POT (Orange) Logo
             RichText(

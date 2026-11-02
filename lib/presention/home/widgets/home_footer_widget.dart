@@ -63,40 +63,29 @@ class HomeFooterWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Image.asset(
-                                'assets/images/logo.png',
-                                height: 38,
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(width: 8),
-                              RichText(
-                                text: const TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: 'JOT',
-                                      style: TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.textDark,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: 'POT',
-                                      style: TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.primaryOrange,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
+                          RichText(
+                            text: const TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'JOT',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textDark,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                TextSpan(
+                                  text: 'POT',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.primaryOrange,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -248,40 +237,29 @@ class HomeFooterWidget extends StatelessWidget {
                 )
               else ...[
                 // Mobile: Stacked Vertical View
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 38,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(width: 8),
-                    RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'JOT',
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textDark,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'POT',
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primaryOrange,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
+                RichText(
+                  text: const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'JOT',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textDark,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                      TextSpan(
+                        text: 'POT',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primaryOrange,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
