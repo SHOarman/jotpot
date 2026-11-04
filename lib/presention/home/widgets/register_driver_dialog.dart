@@ -67,11 +67,18 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         en == 'minibus';
   }
 
+  bool get _isPickup {
+    if (_selectedVehicle == null) return false;
+    final v = _selectedVehicle!.trim().toLowerCase();
+    final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    return v.contains('পিকআপ') || v.contains('পিক আপ') || en.contains('pickup');
+  }
+
   bool get _isTruck {
     if (_selectedVehicle == null) return false;
     final v = _selectedVehicle!.trim().toLowerCase();
     final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
-    return v.contains('ট্রাক') || en.contains('truck');
+    return v.contains('ট্রাক') || en.contains('truck') || _isPickup;
   }
 
   bool get _isHelicopter {
@@ -169,8 +176,8 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         }
       }
 
-      final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
       final num monthlyFee = vType?.monthlyFee ?? 0;
+      final bool requiresPayment = monthlyFee > 0;
       final num vehicleDiscount = vType?.discountValue ?? 0;
       final String discountType = vType?.discountType ?? 'percentage';
 
@@ -424,13 +431,19 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                             const SizedBox(height: 14),
                           ],
 
-                          // 2. Truck
+                          // 2. Truck / Pickup
                           if (_isTruck) ...[
-                            _buildFieldLabel(strings.truckCoveredLabel),
+                            _buildFieldLabel(_isPickup
+                                ? (strings.isBn ? 'কাভার্ড পিকআপ (Covered Status)' : 'Covered Status')
+                                : strings.truckCoveredLabel),
                             const SizedBox(height: 6),
                             _buildCheckboxBox(
                               value: _isCoveredTruck,
-                              text: strings.truckCoveredCheckbox,
+                              text: _isPickup
+                                  ? (strings.isBn
+                                      ? 'আপনার কি Covered Pickup? (হলে টিক দিন, না হলে দেওয়ার প্রয়োজন নেই)'
+                                      : 'Is your pickup a Covered Pickup? (Check if yes, leave unchecked if not)')
+                                  : strings.truckCoveredCheckbox,
                               onChanged: (val) =>
                                   setState(() => _isCoveredTruck = val),
                             ),
@@ -600,30 +613,44 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                strings.filterUnion,
+                                                '${strings.filterUnion} (${strings.isBn ? 'ঐচ্ছিক' : 'Optional'})',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
                                                   color: Color(0xFF374151),
                                                 ),
                                               ),
-                                              const Text(
-                                                ' *',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.redAccent,
+                                              if (_selectedUnion != null &&
+                                                  _selectedUnion!.isNotEmpty)
+                                                InkWell(
+                                                  onTap: () => setState(
+                                                      () => _selectedUnion = null),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(
+                                                        horizontal: 4),
+                                                    child: Text(
+                                                      strings.isBn ? 'মুছুন' : 'Clear',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Colors.redAccent,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 4),
                                           _buildDropdown(
                                             hint: _isLoadingUnions
                                                 ? 'লোড হচ্ছে...'
-                                                : strings.unionPlaceholder,
+                                                : (strings.isBn
+                                                    ? 'ইউনিয়ন/পৌরসভা (ঐচ্ছিক)'
+                                                    : 'Select Union (Optional)'),
                                             value: _selectedUnion,
                                             items: _availableUnions,
                                             isEnabled: _selectedUpazila != null &&
@@ -922,8 +949,8 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
       }
     }
 
-    final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
     final num monthlyFee = vType?.monthlyFee ?? 0;
+    final bool requiresPayment = monthlyFee > 0;
     final num vehicleDiscount = vType?.discountValue ?? 0;
     final String discountType = vType?.discountType ?? 'percentage';
 

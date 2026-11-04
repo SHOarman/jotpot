@@ -246,8 +246,8 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
       }
     }
 
-    final bool requiresPayment = (vType?.monthlyFee ?? 0) > 0;
     final num monthlyFee = vType?.monthlyFee ?? 0;
+    final bool requiresPayment = monthlyFee > 0;
     final num vehicleDiscount = vType?.discountValue ?? 0;
     final String discountType = vType?.discountType ?? 'percentage';
 
@@ -510,11 +510,12 @@ class _RenewLicenseDialogState extends State<RenewLicenseDialog> {
       if (driver.expiryDate != null) {
         final now = DateTime.now();
         if (driver.expiryDate!.year > 2090) {
-          // If previously set to 2099 but vehicle has fee, show durationDays or 90 days
-          remainingDays = driver.durationDays > 0 ? driver.durationDays : 90;
+          isUnlimited = true;
           isExpired = false;
         } else if (driver.expiryDate!.isAfter(now)) {
-          remainingDays = driver.expiryDate!.difference(now).inDays + 1;
+          final diff = driver.expiryDate!.difference(now);
+          remainingDays = diff.inDays + (diff.inHours % 24 > 0 ? 1 : 0);
+          if (remainingDays <= 0) remainingDays = 1;
           isExpired = false;
         } else {
           isExpired = true;

@@ -180,14 +180,18 @@ class DriverCard extends StatelessWidget {
                   ),
                 ],
 
-                // ── Truck Features ───────────────────────────────────────
+                // ── Truck / Pickup Features ───────────────────────────────────────
                 if (driver.isCovered) ...[
                   const SizedBox(height: 14),
                   _detailRow(
                     icon: Icons.local_shipping_rounded,
                     color: const Color(0xFF6366F1),
                     label: strings.isBn ? 'গাড়ির কভার' : 'Covered Status',
-                    value: strings.isBn ? 'কাভার্ড ট্রাক (Covered Truck)' : 'Covered Truck',
+                    value: (driver.vehicleType.toLowerCase().contains('পিকআপ') ||
+                            driver.vehicleType.toLowerCase().contains('পিক আপ') ||
+                            driver.vehicleType.toLowerCase().contains('pickup'))
+                        ? (strings.isBn ? 'কাভার্ড পিকআপ (Covered Pickup)' : 'Covered Pickup')
+                        : (strings.isBn ? 'কাভার্ড ট্রাক (Covered Truck)' : 'Covered Truck'),
                   ),
                 ],
                 if (driver.vehicleLength.isNotEmpty) ...[
@@ -426,13 +430,17 @@ class DriverCard extends StatelessWidget {
       );
     }
 
-    // B. Truck Covered Status
+    // B. Truck / Pickup Covered Status
     if (driver.isCovered) {
+      final vType = driver.vehicleType.toLowerCase();
+      final isPickup = vType.contains('পিকআপ') || vType.contains('পিক আপ') || vType.contains('pickup');
       featureChips.add(
         _buildCardChip(
           icon: Icons.local_shipping_rounded,
           color: const Color(0xFF6366F1),
-          text: strings.isBn ? 'কাভার্ড ট্রাক' : 'Covered Truck',
+          text: isPickup
+              ? (strings.isBn ? 'কাভার্ড পিকআপ' : 'Covered Pickup')
+              : (strings.isBn ? 'কাভার্ড ট্রাক' : 'Covered Truck'),
         ),
       );
     }

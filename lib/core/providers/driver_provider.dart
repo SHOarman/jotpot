@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
@@ -143,19 +143,28 @@ class DriverProvider extends ChangeNotifier {
 
   // Preset Filter Options: Dynamic translation based on current language
   List<String> get vehicleTypes {
-    final rawList = _vehicleTypeModels.isNotEmpty
-        ? _vehicleTypeModels.map((v) => v.name).toList()
-        : [
-            'Bus',
-            'Car',
-            'Microbus',
-            'CNG',
-            'Truck',
-            'Ambulance',
-            'Bike',
-            'Pickup',
-          ];
-    return rawList
+    final activeModels = _vehicleTypeModels.where((v) => v.isVisible && v.isActive).toList();
+    if (activeModels.isNotEmpty) {
+      return activeModels.map((v) {
+        if (_isBengali) {
+          if (v.bnName.trim().isNotEmpty) return v.bnName.trim();
+          return AppStrings.translateVehicleTypeStatic(v.name, true);
+        } else {
+          return v.name.trim();
+        }
+      }).toSet().toList();
+    }
+    final defaultList = [
+      'Bus',
+      'Car',
+      'Microbus',
+      'CNG',
+      'Truck',
+      'Ambulance',
+      'Bike',
+      'Pickup',
+    ];
+    return defaultList
         .map((vt) => AppStrings.translateVehicleTypeStatic(vt, _isBengali))
         .toSet()
         .toList();
@@ -230,7 +239,7 @@ class DriverProvider extends ChangeNotifier {
   List<DriverModel> get filteredDrivers {
     final list = _drivers.where((driver) {
       if (!driver.isActive) return false;
-      final isAllFree = _globalSettings?.allVehiclesFree == true;
+      final isAllFree = _globalSettings.allVehiclesFree == true;
       if (!isAllFree && driver.expiryDate != null && driver.expiryDate!.year <= 2090) {
         if (driver.expiryDate!.isBefore(DateTime.now())) {
           return false;
@@ -261,10 +270,23 @@ class DriverProvider extends ChangeNotifier {
               .toLowerCase()
               .contains(_searchQuery.toLowerCase());
 
-      final matchesVehicle = _selectedVehicleType == null ||
+      bool matchesVehicle = _selectedVehicleType == null ||
           driver.vehicleType == _selectedVehicleType ||
           AppStrings.areSameVehicleType(
               driver.vehicleType, _selectedVehicleType!);
+      if (!matchesVehicle && _selectedVehicleType != null && _vehicleTypeModels.isNotEmpty) {
+        final sel = _selectedVehicleType!.trim().toLowerCase();
+        final dType = driver.vehicleType.trim().toLowerCase();
+        for (final m in _vehicleTypeModels) {
+          final mName = m.name.trim().toLowerCase();
+          final mBn = m.bnName.trim().toLowerCase();
+          if ((sel == mName || (mBn.isNotEmpty && sel == mBn)) &&
+              (dType == mName || (mBn.isNotEmpty && dType == mBn))) {
+            matchesVehicle = true;
+            break;
+          }
+        }
+      }
 
       final matchesDivision = _selectedDivision == null ||
           driver.division == _selectedDivision ||

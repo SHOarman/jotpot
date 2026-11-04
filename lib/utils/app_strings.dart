@@ -558,6 +558,31 @@ class AppStrings {
       if (enToBnVehicles.containsKey(lower)) {
         return enToBnVehicles[lower]!;
       }
+      final key = getCanonicalVehicleKey(clean);
+      switch (key) {
+        case 'motorcycle': return 'মোটরসাইকেল';
+        case 'car': return 'প্রাইভেট কার';
+        case 'microbus': return 'মাইক্রোবাস';
+        case 'noah': return 'নোয়া';
+        case 'pickup': return 'পিকআপ';
+        case 'truck': return 'ট্রাক';
+        case 'cng': return 'সিএনজি';
+        case 'easy_bike': return 'ইজি বাইক';
+        case 'air_ambulance': return 'এয়ার অ্যাম্বুলেন্স';
+        case 'ambulance': return 'অ্যাম্বুলেন্স';
+        case 'helicopter': return 'হেলিকপ্টার';
+        case 'covered_van': return 'কাভার্ড ভ্যান';
+        case 'van': return 'ভ্যান';
+        case 'minibus': return 'মিনি বাস';
+        case 'bus': return 'বাস';
+        case 'leguna': return 'লেগুনা';
+        case 'tractor': return 'ট্রাক্টর';
+        case 'boat': return 'নৌকা';
+        case 'launch': return 'লঞ্চ';
+        case 'speedboat': return 'স্পিডবোট';
+        case 'trolley': return 'ট্রলি';
+        case 'rickshaw': return 'রিকশা';
+      }
       return clean;
     } else {
       if (bnToEnVehicles.containsKey(clean)) {
@@ -675,8 +700,79 @@ class AppStrings {
     return bnA.isNotEmpty && bnA == bnB;
   }
 
+  static String getCanonicalVehicleKey(String raw) {
+    final clean = raw.trim().toLowerCase();
+    if (clean.isEmpty) return '';
+
+    if (clean.contains('bike') || clean.contains('motorcycle') || clean.contains('motor cycle') ||
+        clean.contains('বাইক') || clean.contains('মোটরসাইকেল') || clean.contains('মোটর সাইকেল')) {
+      return 'motorcycle';
+    }
+    if (clean.contains('private car') || clean.contains('car') || clean.contains('sedan') ||
+        clean.contains('প্রাইভেট কার') || clean.contains('কার') || clean.contains('প্রাইভেটকার')) {
+      return 'car';
+    }
+    if (clean.contains('microbus') || clean.contains('micro bus') || clean.contains('hiace') || clean.contains('hayes') ||
+        clean.contains('মাইক্রোবাস') || clean.contains('মাইক্রো বাস') || clean.contains('হায়েস') || clean.contains('হায়স') || clean.contains('হায়িস')) {
+      return 'microbus';
+    }
+    if (clean.contains('noah') || clean.contains('voxy') || clean.contains('নোহা') || clean.contains('নোয়া') || clean.contains('নয়া')) {
+      return 'noah';
+    }
+    if (clean.contains('pickup') || clean.contains('pick up') || clean.contains('পিকআপ') || clean.contains('পিক আপ')) {
+      return 'pickup';
+    }
+    if (clean.contains('truck') || clean.contains('ট্রাক')) {
+      return 'truck';
+    }
+    if (clean.contains('cng') || clean.contains('সিএনজি') || clean.contains('সি এন জি')) {
+      return 'cng';
+    }
+    if (clean.contains('easy bike') || clean.contains('easybike') || clean.contains('tomtom') || clean.contains('mishuk') || clean.contains('auto') ||
+        clean.contains('ইজি বাইক') || clean.contains('ইজিবাইক') || clean.contains('টমটম') || clean.contains('মিশুক') || clean.contains('অটো')) {
+      return 'easy_bike';
+    }
+    if (clean.contains('air ambulance') || clean.contains('এয়ার অ্যাম্বুলেন্স')) {
+      return 'air_ambulance';
+    }
+    if (clean.contains('ambulance') || clean.contains('অ্যাম্বুলেন্স')) {
+      return 'ambulance';
+    }
+    if (clean.contains('helicopter') || clean.contains('হেলিকপ্টার')) {
+      return 'helicopter';
+    }
+    if (clean.contains('covered van') || clean.contains('কাভার্ড ভ্যান')) {
+      return 'covered_van';
+    }
+    if (clean.contains('van') || clean.contains('ভ্যান')) {
+      return 'van';
+    }
+    if (clean.contains('mini bus') || clean.contains('minibus') || clean.contains('মিনি বাস') || clean.contains('মিনিবাস')) {
+      return 'minibus';
+    }
+    if (clean.contains('bus') || clean.contains('বাস')) {
+      return 'bus';
+    }
+    if (clean.contains('leguna') || clean.contains('লেগুনা')) {
+      return 'leguna';
+    }
+    if (clean.contains('tractor') || clean.contains('votvoti') || clean.contains('ট্রাক্টর') || clean.contains('ভটভটি')) {
+      return 'tractor';
+    }
+    if (clean.contains('speed') || clean.contains('স্পিডবোট')) return 'speedboat';
+    if (clean.contains('launch') || clean.contains('লঞ্চ')) return 'launch';
+    if (clean.contains('boat') || clean.contains('নৌকা')) return 'boat';
+    if (clean.contains('trolley') || clean.contains('ট্রলি')) return 'trolley';
+    if (clean.contains('rickshaw') || clean.contains('রিকশা')) return 'rickshaw';
+
+    return clean;
+  }
+
   static bool areSameVehicleType(String a, String b) {
     if (a.toLowerCase().trim() == b.toLowerCase().trim()) return true;
+    final keyA = getCanonicalVehicleKey(a);
+    final keyB = getCanonicalVehicleKey(b);
+    if (keyA.isNotEmpty && keyA == keyB) return true;
     final bnA = translateVehicleTypeStatic(a, true).toLowerCase();
     final bnB = translateVehicleTypeStatic(b, true).toLowerCase();
     return bnA.isNotEmpty && bnA == bnB;
