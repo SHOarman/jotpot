@@ -89,7 +89,7 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText),
+                            strings.isBn ? (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText) : strings.footerAboutText,
                             style: const TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 14,
@@ -211,21 +211,21 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           _FooterInteractiveLink(
-                            text: (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy),
+                            text: strings.isBn ? (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy) : strings.footerPrivacyPolicy,
                             isUnderlined: true,
                             onTap: () => _openPolicy(
                                 context, PolicyType.privacyPolicy),
                           ),
                           const SizedBox(height: 10),
                           _FooterInteractiveLink(
-                            text: (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs),
+                            text: strings.isBn ? (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs) : strings.footerAboutUs,
                             isUnderlined: true,
                             onTap: () =>
                                 _openPolicy(context, PolicyType.aboutUs),
                           ),
                           const SizedBox(height: 10),
                           _FooterInteractiveLink(
-                            text: (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions),
+                            text: strings.isBn ? (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions) : strings.footerTermsConditions,
                             isUnderlined: true,
                             onTap: () => _openPolicy(
                                 context, PolicyType.termsAndConditions),
@@ -263,7 +263,7 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText),
+                  strings.isBn ? (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText) : strings.footerAboutText,
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 14,
@@ -330,20 +330,20 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _FooterInteractiveLink(
-                  text: (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy),
+                  text: strings.isBn ? (settings.privacyPolicyTitle.isNotEmpty ? settings.privacyPolicyTitle : strings.footerPrivacyPolicy) : strings.footerPrivacyPolicy,
                   isUnderlined: true,
                   onTap: () =>
                       _openPolicy(context, PolicyType.privacyPolicy),
                 ),
                 const SizedBox(height: 8),
                 _FooterInteractiveLink(
-                  text: (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs),
+                  text: strings.isBn ? (settings.aboutUsTitle.isNotEmpty ? settings.aboutUsTitle : strings.footerAboutUs) : strings.footerAboutUs,
                   isUnderlined: true,
                   onTap: () => _openPolicy(context, PolicyType.aboutUs),
                 ),
                 const SizedBox(height: 8),
                 _FooterInteractiveLink(
-                  text: (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions),
+                  text: strings.isBn ? (settings.termsConditionsTitle.isNotEmpty ? settings.termsConditionsTitle : strings.footerTermsConditions) : strings.footerTermsConditions,
                   isUnderlined: true,
                   onTap: () =>
                       _openPolicy(context, PolicyType.termsAndConditions),
@@ -359,7 +359,7 @@ class HomeFooterWidget extends StatelessWidget {
               // Copyright (always centered)
               Center(
                 child: Text(
-                  (settings.footerCopyright.isNotEmpty ? settings.footerCopyright : strings.footerCopyright),
+                  strings.isBn ? (settings.footerCopyright.isNotEmpty ? settings.footerCopyright : strings.footerCopyright) : strings.footerCopyright,
                   style: const TextStyle(
                     color: AppColors.textHint,
                     fontSize: 13,

@@ -48,8 +48,7 @@ class DriverCard extends StatelessWidget {
   /// Show a full detail dialog when the card is tapped.
   void _showDetailDialog(BuildContext context) {
     final strings = AppStrings.of(context);
-    final locUpazila = strings.translateUpazila(driver.upazila);
-    final locDistrict = strings.translateDistrict(driver.district);
+    
     final displayDetails = driver.getLocalizedDetails(isBn: strings.isBn);
 
     showDialog(
@@ -140,11 +139,7 @@ class DriverCard extends StatelessWidget {
                   icon: Icons.location_on_rounded,
                   color: AppColors.locationRed,
                   label: strings.isBn ? 'অবস্থান' : 'Location',
-                  value: _buildLocationText(
-                    strings,
-                    locUpazila,
-                    locDistrict,
-                  ),
+                  value: _buildLocationText(strings),
                 ),
 
                 // ── Union & Ward ──────────────────────────────────────────
@@ -388,28 +383,62 @@ class DriverCard extends StatelessWidget {
     );
   }
 
-  String _buildLocationText(
-      AppStrings strings, String locUpazila, String locDistrict) {
+  String _buildLocationText(AppStrings strings) {
     final parts = <String>[];
-    if (locUpazila.isNotEmpty) parts.add(locUpazila);
-    if (locDistrict.isNotEmpty) parts.add(locDistrict);
+
+    final rawUnion = driver.union.trim();
+    final rawWard = driver.ward.trim();
+    String areaPart = '';
+
+    if (rawUnion.isNotEmpty) {
+      if (!strings.isBn) {
+        String u = rawUnion
+            .replaceAll('পৌরসভা', 'Pourashava')
+            .replaceAll('পৌরসভা', 'Pourashava')
+            .replaceAll('ইউনিয়ন', 'Union')
+            .replaceAll('ইউনিয়ন', 'Union')
+            .replaceAll('সদর', 'Sadar');
+        areaPart = u;
+      } else {
+        areaPart = rawUnion;
+      }
+    }
+
+    if (rawWard.isNotEmpty) {
+      final wardStr = strings.isBn ? 'ওয়ার্ড $rawWard' : 'Ward $rawWard';
+      areaPart = areaPart.isNotEmpty ? '$areaPart, $wardStr' : wardStr;
+    }
+
+    if (areaPart.isNotEmpty) {
+      parts.add(areaPart);
+    }
+
+    final locUpazila = strings.translateUpazila(driver.upazila);
+    if (locUpazila.isNotEmpty) {
+      parts.add(locUpazila);
+    }
+
+    final locDistrict = strings.translateDistrict(driver.district);
+    if (locDistrict.isNotEmpty) {
+      parts.add(locDistrict);
+    }
+
     final divTrans = strings.translateDivision(driver.division);
-    if (divTrans.isNotEmpty) parts.add(divTrans);
-    return parts.isNotEmpty ? parts.join(', ') : driver.address;
+    if (divTrans.isNotEmpty) {
+      parts.add(divTrans);
+    }
+
+    if (parts.isNotEmpty) {
+      return parts.join(', ');
+    }
+    return driver.address;
   }
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
 
-    final locUpazila = strings.translateUpazila(driver.upazila);
-    final locDistrict = strings.translateDistrict(driver.district);
-    final fallbackLoc = (locUpazila.isNotEmpty && locDistrict.isNotEmpty)
-        ? '$locUpazila, $locDistrict'
-        : (locDistrict.isNotEmpty ? locDistrict : locUpazila);
-
-    final locationText =
-        driver.address.isNotEmpty ? driver.address : fallbackLoc;
+    final locationText = _buildLocationText(strings);
 
     final displayDetails = driver.getLocalizedDetails(isBn: strings.isBn);
 

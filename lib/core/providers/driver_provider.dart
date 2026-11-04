@@ -144,13 +144,14 @@ class DriverProvider extends ChangeNotifier {
   // Preset Filter Options: Dynamic translation based on current language
   List<String> get vehicleTypes {
     final activeModels = _vehicleTypeModels.where((v) => v.isVisible && v.isActive).toList();
-    if (activeModels.isNotEmpty) {
-      return activeModels.map((v) {
+    final modelsToUse = activeModels.isNotEmpty ? activeModels : _vehicleTypeModels;
+    if (modelsToUse.isNotEmpty) {
+      return modelsToUse.map((v) {
         if (_isBengali) {
           if (v.bnName.trim().isNotEmpty) return v.bnName.trim();
           return AppStrings.translateVehicleTypeStatic(v.name, true);
         } else {
-          return v.name.trim();
+          return AppStrings.translateVehicleTypeStatic(v.name, false);
         }
       }).toSet().toList();
     }
