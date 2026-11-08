@@ -56,6 +56,10 @@ class AppStrings {
       AppStrings.translateDistrictStatic(raw, isBn);
   String translateUpazila(String raw) =>
       AppStrings.translateUpazilaStatic(raw, isBn);
+  String translateUnion(String raw) =>
+      AppStrings.translateUnionStatic(raw, isBn);
+  String translateWard(String raw) =>
+      AppStrings.translateWardStatic(raw, isBn);
   String vehicleCategoryName(String raw) =>
       AppStrings.translateVehicleTypeStatic(raw, isBn);
 
@@ -81,7 +85,7 @@ class AppStrings {
     'rajshahi': 'রাজশাহী',
     'sylhet': 'সিলেট',
     'rangpur': 'রংপুর',
-    'mymensingh': 'ময়মনসিংহ',
+    'mymensingh': 'ময়মনসিংহ',
   };
 
   static const Map<String, String> bnToEnDistricts = {
@@ -187,7 +191,6 @@ class AppStrings {
   };
 
   static const Map<String, String> bnToEnUpazilas = {
-    // Barishal
     'বোরহানউদ্দিন': 'Burhanuddin',
     'burhanuddin': 'Burhanuddin',
     'ভোলা সদর': 'Bhola Sadar',
@@ -236,7 +239,6 @@ class AppStrings {
     'রাজাপুর': 'Rajapur',
     'কাঠালিয়া': 'Kathalia',
     'কাঠালিয়া': 'Kathalia',
-    // Dhaka
     'ধামরাই': 'Dhamrai',
     'সাভার': 'Savar',
     'মিরপুর': 'Mirpur',
@@ -297,7 +299,6 @@ class AppStrings {
     'কটিয়াদী': 'Katiadi',
     'কটিয়াদী': 'Katiadi',
     'করিমগঞ্জ': 'Karimganj',
-    // Chattogram
     'পতেঙ্গা': 'Patenga',
     'পাঁচলাইশ': 'Panchlaish',
     'পাহাড়তলী': 'Pahartali',
@@ -308,7 +309,7 @@ class AppStrings {
     'মিরসরাই': 'Mirsarai',
     'হাটহাজারী': 'Hathazari',
     'রাউজান': 'Raozan',
-    'কক্সবাজার সদর': 'Cox\'s Bazar Sadar',
+    'কক্সবাজার সদর': "Cox's Bazar Sadar",
     'টেকনাফ': 'Teknaf',
     'উখিয়া': 'Ukhiya',
     'উখিয়া': 'Ukhiya',
@@ -336,7 +337,6 @@ class AppStrings {
     'হাজীগঞ্জ': 'Hajiganj',
     'মতলব': 'Matlab',
     'শাহরাস্তি': 'Shahrasti',
-    // Rajshahi
     'রাজশাহী সদর': 'Rajshahi Sadar',
     'বাঘা': 'Bagha',
     'চারঘাট': 'Charghat',
@@ -368,7 +368,6 @@ class AppStrings {
     'বড়াইগ্রাম': 'Baraigram',
     'বড়াইগ্রাম': 'Baraigram',
     'গুরুদাসপুর': 'Gurudaspur',
-    // Khulna
     'খুলনা সদর': 'Khulna Sadar',
     'খালিশপুর': 'Khalishpur',
     'ডুমুরিয়া': 'Dumuria',
@@ -388,7 +387,6 @@ class AppStrings {
     'সাতক্ষীরা সদর': 'Satkhira Sadar',
     'কালীগঞ্জ': 'Kaliganj',
     'শ্যামনগর': 'Shyamnagar',
-    // Sylhet
     'সিলেট সদর': 'Sylhet Sadar',
     'বিয়ানীবাজার': 'Beanibazar',
     'বিয়ানীবাজার': 'Beanibazar',
@@ -408,7 +406,6 @@ class AppStrings {
     'ছাতক': 'Chhatak',
     'জগন্নাথপুর': 'Jagannathpur',
     'তাহিরপুর': 'Tahirpur',
-    // Rangpur
     'রংপুর সদর': 'Rangpur Sadar',
     'বদরগঞ্জ': 'Badarganj',
     'পীরগঞ্জ': 'Pirganj',
@@ -421,7 +418,6 @@ class AppStrings {
     'কুড়িগ্রাম সদর': 'Kurigram Sadar',
     'নাগেশ্বরী': 'Nageshwari',
     'উলিপুর': 'Ulipur',
-    // Mymensingh
     'ময়মনসিংহ সদর': 'Mymensingh Sadar',
     'ময়মনসিংহ সদর': 'Mymensingh Sadar',
     'ত্রিশাল': 'Trishal',
@@ -444,6 +440,387 @@ class AppStrings {
     'কেন্দুয়া': 'Kendua',
     'পূর্বধলা': 'Purbadhala',
     'দুর্গাপুর': 'Durgapur',
+    'উত্তরা পূর্ব': 'Uttara East',
+    'উত্তরা পশ্চিম': 'Uttara West',
+    'উত্তরখান': 'Uttar Khan',
+    'দক্ষিণখান': 'Dakshin Khan',
+    'বিমানবন্দর': 'Airport',
+    'তুরাগ': 'Turag',
+    'খিলক্ষেত': 'Khilkhet',
+    'ক্যান্টনমেন্ট': 'Cantonment',
+    'বনানী': 'Banani',
+    'বাড্ডা': 'Badda',
+    'ভাটারা': 'Vatara',
+    'রামপুরা': 'Rampura',
+    'হাতিরঝিল': 'Hatirjheel',
+    'ধানমন্ডি': 'Dhanmondi',
+    'কলাবাগান': 'Kalabagan',
+    'নিউমার্কেট': 'New Market',
+    'হাজারীবাগ': 'Hazaribagh',
+    'মোহাম্মদপুর': 'Mohammadpur',
+    'আদাবর': 'Adabor',
+    'তেজগাঁও': 'Tejgaon',
+    'তেজগাঁও শিল্পাঞ্চল': 'Tejgaon Industrial',
+    'শেরেবাংলা নগর': 'Sher-e-Bangla Nagar',
+    'পল্লবী': 'Pallabi',
+    'রূপনগর': 'Rupnagar',
+    'কাফরুল': 'Kafrul',
+    'শাহআলী': 'Shah Ali',
+    'দারুস সালাম': 'Darus-Salam',
+    'খিলগাঁও': 'Khilgaon',
+    'সবুজবাগ': 'Sabujbag',
+    'মুগদা': 'Mugda',
+    'মতিঝিল': 'Motijheel',
+    'পল্টন': 'Paltan Model',
+    'শাহজাহানপুর': 'Shahjahanpur',
+    'রমনা': 'Ramna Model',
+    'শাহবাগ': 'Shahbag',
+    'সূত্রাপুর': 'Sutrapur',
+    'ওয়ারী': 'Wari',
+    'গেন্ডারিয়া': 'Gandaria',
+    'লালবাগ': 'Lalbagh',
+    'চকবাজার': 'Chakbazar',
+    'বংশাল': 'Bangshal',
+    'কামরাঙ্গীরচর': 'Kamrangirchar',
+    'যাত্রাবাড়ী': 'Jatrabari',
+    'ডেমরা': 'Demra',
+    'কদমতলী': 'Kadamtoli',
+    'শ্যামপুর': 'Shyampur',
+    'ভাসানটেক': 'Bhashantek',
+    'কোটালীপাড়া': 'Kotalipara',
+    'মুকসুদপুর': 'Muksudpur',
+    'কাশিয়ানী': 'Kashiani',
+    'টুঙ্গিপাড়া': 'Tungipara',
+    'ডাসার': 'Dasar',
+    'সদরপুর': 'Sadarpur',
+    'চরভদ্রাসন': 'Charbhadrasan',
+    'নগরকান্দা': 'Nagarkanda',
+    'সালথা': 'Saltha',
+    'বোয়ালমারী': 'Boalmari',
+    'মধুখালী': 'Madhukhali',
+    'আলফাডাঙ্গা': 'Alfadanga',
+    'ভাঙ্গা': 'Bhanga',
+    'গোয়ালন্দ': 'Goalanda',
+    'পাংশা': 'Pangsha',
+    'বালিয়াকান্দি': 'Baliakandi',
+    'কালুখালী': 'Kalukhali',
+    'শরীয়তপুর সদর': 'Shariatpur Sadar',
+    'নড়িয়া': 'Naria',
+    'জাজিরা': 'Zajira',
+    'ডামুড্যা': 'Damudya',
+    'ভেদরগঞ্জ': 'Bhedarganj',
+    'গোসাইরহাট': 'Gosairhat',
+    'খুলশী': 'Khulshi',
+    'চান্দগাঁও': 'Chandgaon',
+    'বাকলিয়া': 'Bakalia',
+    'বায়েজিদ বোস্তামী': 'Bayazid Bostami',
+    'ডবলমুরিং': 'Double Mooring',
+    'হালিশহর': 'Halishahar',
+    'ইপিজেড': 'EPZ',
+    'আকবর শাহ': 'Akbar Shah',
+    'কর্ণফুলী': 'Karnaphuli',
+    'সদরঘাট': 'Sadarghat',
+    'বাগাতিপাড়া': 'Bagatipara',
+    'লালপুর': 'Lalpur',
+    'নলডাঙ্গা': 'Naldanga',
+    'নীলফামারী সদর': 'Nilphamari Sadar',
+    'সৈয়দপুর': 'Saidpur',
+    'ডোমার': 'Domar',
+    'ডিমলা': 'Dimla',
+    'জলঢাকা': 'Jaldhaka',
+    'কিশোরগঞ্জ': 'Kishoreganj',
+    'চিলমারী': 'Chilmari',
+    'রৌমারী': 'Raomari',
+    'চর রাজীবপুর': 'Char Rajibpur',
+    'ভূরুঙ্গামারী': 'Bhurungamari',
+    'রাজারহাট': 'Rajarhat',
+    'ফুলবাড়ী': 'Phulbari',
+    'ফুলবাড়ীয়া': 'Fulbaria',
+    'নান্দাইল': 'Nandail',
+    'ঈশ্বরগঞ্জ': 'Ishwarganj',
+    'গৌরীপুর': 'Gauripur',
+    'ফুলপুর': 'Phulpur',
+    'তারাকান্দা': 'Tara Khanda',
+    'হালুয়াঘাট': 'Haluaghat',
+    'ধোবাউড়া': 'Dhobaura',
+    'ইসলামপুর': 'Islampur',
+    'দেওয়ানগঞ্জ': 'Dewanganj',
+    'বকশীগঞ্জ': 'Baksiganj',
+    'বারহাট্টা': 'Barhatta',
+    'কলমাকান্দা': 'Kalmakanda',
+    'মদন': 'Madan',
+    'মোহনগঞ্জ': 'Mohanganj',
+    'খালিয়াজুড়ি': 'Khaliajuri',
+    'আটপাড়া': 'Atpara',
+    'ঝিনাইগাতী': 'Jhenaigati',
+    'টঙ্গী পূর্ব': 'Tanggi East',
+    'টঙ্গী পশ্চিম': 'Tanggi West',
+    'বাসন': 'Basan',
+    'কোনাবাড়ী': 'Konabari',
+    'কাশিমপুর': 'Kashimapur',
+    'গাছা': 'Gachha',
+    'পূবাইল': 'Pubail',
+    'ফতুল্লা': 'Phatulla',
+    'সিদ্ধিরগঞ্জ': 'Siddhiraganj',
+    'দেলদুয়ার': 'Deladuyar',
+    'সখীপুর': 'Sakhipur',
+    'বাসাইল': 'Basail',
+    'ধনবাড়ী': 'Dhanbari',
+    'ভূঞাপুর': 'Bhunapur',
+    'কালিহাতী': 'Kalihati',
+    'কুলিয়ারচর': 'Kuliyarachar',
+    'পাকুন্দিয়া': 'Pakundia',
+    'তাড়াইল': 'Tarail',
+    'ইটনা': 'Itna',
+    'মিঠামইন': 'Mithamain',
+    'অষ্টগ্রাম': 'Austagram',
+    'নিকলী': 'Nikli',
+    'মুন্সীগঞ্জ সদর': 'Munshiganj Sadar',
+    'বেলাবো': 'Belabo',
+    'ফরিদপুর সদর': 'Faridpur Sadar',
+    'গোপালগঞ্জ সদর': 'Gopalganj Sadar',
+    'মাদারীপুর সদর': 'Madaripur Sadar',
+    'শিবচর': 'Shibchar',
+    'কালকিনি': 'Kalkini',
+    'রাজৈর': 'Rajoir',
+    'রাজবাড়ী সদর': 'Rajbari Sadar',
+    'মীরসরাই': 'Mirsharai',
+    'ফটিকছড়ি': 'Phatikachhari',
+    'রাঙ্গুনিয়া': 'Rangguniya',
+    'পটিয়া': 'Patiya',
+    'বোয়ালখালী': 'Boyalakhali',
+    'আনোয়ারা': 'Anoyara',
+    'চন্দনাইশ': 'Chandanaish',
+    'সাতকানিয়া': 'Satkania',
+    'লোহাগাড়া': 'Lohagara',
+    'বাঁশখালী': 'BaঁShakhali',
+    'সন্দ্বীপ': 'Sandbip',
+    'ঈদগাঁও': 'IdagaঁO',
+    'পেকুয়া': 'Ukhia',
+    'কুতুবদিয়া': 'Kutubdia',
+    'আদর্শ সদর': 'Comilla Adarsha Sadar',
+    'সদর দক্ষিণ': 'Comilla Adarsha Sadar',
+    'বরুড়া': 'Barura',
+    'চান্দিনা': 'Chandina',
+    'হোমনা': 'Homna',
+    'মেঘনা': 'Meghna',
+    'তিতাস': 'Titas',
+    'দেবিদ্বার': 'Debidbar',
+    'ব্রাহ্মণপাড়া': 'Brahmanpara',
+    'বুড়িচং': 'Burichang',
+    'মনোহরগঞ্জ': 'Monohargonj',
+    'নাঙ্গলকোট': 'Nanggalakot',
+    'লালমাই': 'Lalamai',
+    'পরশুরাম': 'Parshuram',
+    'ফুলগাজী': 'Phulagaji',
+    'ব্রাহ্মণবাড়িয়া সদর': 'Brahmanbaria Sadar',
+    'আশুগঞ্জ': 'Ashuganj',
+    'সরাইল': 'Sarail',
+    'নাসিরনগর': 'Nasirnagar',
+    'নবীনগর': 'Nabinagar',
+    'বাঞ্ছারামপুর': 'Bancharampur',
+    'কসবা': 'Kasba',
+    'আখাউড়া': 'Akhaura',
+    'বিজয়নগর': 'Bijoynagar',
+    'সেনবাগ': 'Senbagh',
+    'সোনাইমুড়ী': 'Sonaimuri',
+    'কবিরহাট': 'Kabirhat',
+    'সুবর্ণচর': 'Subarnachar',
+    'হাতিয়া': 'Hatiya',
+    'লক্ষ্মীপুর সদর': 'Lakshmipur Sadar',
+    'রায়পুর': 'Rayapur',
+    'রামগঞ্জ': 'Ramganj',
+    'রামগতি': 'Ramgati',
+    'কমলনগর': 'Kamalnagar',
+    'মতলব উত্তর': 'Matalab North',
+    'মতলব দক্ষিণ': 'Matalab South',
+    'ফরিদগঞ্জ': 'Pharidaganj',
+    'কচুয়া': 'Kachua',
+    'হাইমচর': 'Haimchar',
+    'রাঙ্গামাটি সদর': 'Rangamati Sadar',
+    'কাপ্তাই': 'Kaptai',
+    'নানিয়ারচর': 'Naniyarachar',
+    'বাঘাইছড়ি': 'Baghaichhari',
+    'বরকল': 'Barkal',
+    'জুরাছড়ি': 'Jurachhari',
+    'লংগদু': 'Langagadu',
+    'বিলাইছড়ি': 'Bilaichhari',
+    'রাজস্থলী': 'Rajasthali',
+    'বান্দরবান সদর': 'Bandarban Sadar',
+    'রুমা': 'Ruma',
+    'থানচি': 'Thanchi',
+    'রোয়াংছড়ি': 'Royangachhari',
+    'লামা': 'Lama',
+    'আলীকদম': 'Ali Kadam',
+    'নাইক্ষ্যংছড়ি': 'Naikshjangachhari',
+    'খাগড়াছড়ি সদর': 'Khagarachhari Sadar',
+    'মাটিরাঙ্গা': 'Matiranga',
+    'রামগড়': 'Ramgarh',
+    'মানিকছড়ি': 'Manikachhari',
+    'মহালছড়ি': 'Mahalachhari',
+    'পানছড়ি': 'Panachhari',
+    'দীঘিনালা': 'Dighinala',
+    'লক্ষ্মীছড়ি': 'Lakshmichhari',
+    'গুইমারা': 'Guimara',
+    'বোয়ালিয়া': 'Boyaliya',
+    'রাজপাড়া': 'Rajpara',
+    'মতিহার': 'Matihar',
+    'শাহ মখদুম': 'Shah Makhdum',
+    'চন্দ্রিমা': 'Chandrima',
+    'কাটাখালী': 'Katakhali',
+    'বেলপুকুর': 'Belpukur',
+    'এয়ারপোর্ট': 'Eyaraport',
+    'পবা': 'Paba',
+    'তানোর': 'Tanore',
+    'মোহনপুর': 'Mohanpur',
+    'বাগমারা': 'Bagmara',
+    'শাজাহানপুর': 'Shajahanapur',
+    'সারিয়াকান্দি': 'Sariyakandi',
+    'সোনাতলা': 'Sonatola',
+    'গাবতলী': 'Gabtali',
+    'আদমদীঘি': 'Adamdighi',
+    'দুপচাঁচিয়া': 'DupachaঁChiya',
+    'নন্দীগ্রাম': 'Nandigram',
+    'আটঘরিয়া': 'Atgharia',
+    'চাটমোহর': 'Chatmohar',
+    'ভাঙ্গুড়া': 'Bhanggura',
+    'ফরিদপুর': 'Pharidapur',
+    'কামারখন্দ': 'Kamarkhanda',
+    'কাজিপুর': 'Kajipur',
+    'রায়গঞ্জ': 'Rayaganj',
+    'চৌহালী': 'Chauhali',
+    'তাড়াশ': 'Tarash',
+    'নওগাঁ সদর': 'Naogaon Sadar',
+    'রানীনগর': 'Raninagar',
+    'আত্রাই': 'Atrai',
+    'মহাদেবপুর': 'Mohadevpur',
+    'মান্দা': 'Manda',
+    'বদলগাছী': 'Badalgachhi',
+    'পত্নীতলা': 'Patnitala',
+    'ধামইরহাট': 'Dhamoirhat',
+    'নিয়ামতপুর': 'Niyamatapur',
+    'সাপাহার': 'Sapahar',
+    'পোরশা': 'Porsha',
+    'চাঁপাইনবাবগঞ্জ সদর': 'Nawabganj Sadar',
+    'নাচোল': 'Nachole',
+    'গোমস্তাপুর': 'Gomastapur',
+    'ভোলাহাট': 'Bholahat',
+    'জয়পুরহাট সদর': 'Joypurhat Sadar',
+    'পাঁচবিবি': 'PaঁChabibi',
+    'কালাই': 'Kalai',
+    'ক্ষেতলাল': 'Kshetalal',
+    'আক্কেলপুর': 'Akkelpur',
+    'সোনাডাঙ্গা': 'Sonadanga',
+    'খানজাহান আলী': 'Khanajahan Ali',
+    'হরিণটানা': 'Harintana',
+    'লবণচরা': 'Lobonchora',
+    'আড়ংঘাটা': 'Arongghata',
+    'রূপসা': 'Rupsha',
+    'তেরখাদা': 'Terokhada',
+    'দিঘলিয়া': 'Dighalia',
+    'ফুলতলা': 'Phultala',
+    'দাকোপ': 'Dakop',
+    'পাইকগাছা': 'Paikgachha',
+    'কয়রা': 'Koyra',
+    'শার্শা': 'Sharsha',
+    'মণিরামপুর': 'Manirampur',
+    'চৌগাছা': 'Chaugachha',
+    'বাঘারপাড়া': 'Bagherpara',
+    'খোকসা': 'Khoksa',
+    'ঝিনাইদহ সদর': 'Jhenaidah Sadar',
+    'শৈলকুপা': 'Shailkupa',
+    'হরিণাকুণ্ডু': 'Harinakunda',
+    'কোটচাঁদপুর': 'KotachaঁDapur',
+    'মহেশপুর': 'Maheshpur',
+    'কলারোয়া': 'Kalaroa',
+    'তালা': 'Tala',
+    'দেবহাটা': 'Debahata',
+    'আশাশুনি': 'Assasuni',
+    'বাগেরহাট সদর': 'Bagerhat Sadar',
+    'ফকিরহাট': 'Phakirahat',
+    'মোল্লাহাট': 'Mollahat',
+    'চিতলমারী': 'Chitalmari',
+    'রামপাল': 'Rampal',
+    'মোংলা': 'Mongla',
+    'মোরেলগঞ্জ': 'Morelaganj',
+    'শরণখোলা': 'Sarankhola',
+    'চুয়াডাঙ্গা সদর': 'Chuadanga Sadar',
+    'আলমডাঙ্গা': 'Alamdanga',
+    'দামুড়হুদা': 'Damurhuda',
+    'জীবননগর': 'Jibannagar',
+    'মেহেরপুর সদর': 'Meherpur Sadar',
+    'গাংনী': 'Gangni',
+    'মুজিবনগর': 'Mujibnagar',
+    'মাগুরা সদর': 'Magura Sadar',
+    'মহম্মদপুর': 'Mohammadpur',
+    'শালিখা': 'Shalikha',
+    'নড়াইল সদর': 'Narail Sadar',
+    'লোহাগড়া': 'Lohagara',
+    'কালিয়া': 'Kalia',
+    'কাউনিয়া': 'Kaunia',
+    'ভাণ্ডারিয়া': 'Bhandaria',
+    'নেছারাবাদ (স্বরূপকাঠি)': 'Nechharabad (Sbarupakathi)',
+    'কাঁঠালিয়া': 'Kathalia',
+    'জালালাবাদ': 'Jalalabad',
+    'শাহপরাণ': 'Shah Poran',
+    'মোগলাবাজার': 'Mogalabajar',
+    'দক্ষিণ সুরমা': 'South Surama',
+    'ওসমানীনগর': 'Osmaninagar',
+    'বালাগঞ্জ': 'Balaganj',
+    'ফেঞ্চুগঞ্জ': 'Phenchuganj',
+    'জকিগঞ্জ': 'Jakiganj',
+    'কানাইঘাট': 'Kanaighat',
+    'গোয়াইনঘাট': 'Goyainaghat',
+    'রাজনগর': 'Rajnagar',
+    'বড়লেখা': 'Barlekha',
+    'জুড়ী': 'Juri',
+    'শায়েস্তাগঞ্জ': 'Shayestaganj',
+    'বাহুবল': 'Bahubal',
+    'বানিয়াচং': 'Baniyachong',
+    'আজমিরীগঞ্জ': 'Ajmiriganj',
+    'লাখাই': 'Lakhai',
+    'শান্তিগঞ্জ': 'Shantiganj',
+    'দোয়ারাবাজার': 'Doyarabajar',
+    'দিরাই': 'Derai',
+    'শাল্লা': 'Sullah',
+    'ধর্মপাশা': 'Dharampasha',
+    'মধ্যনগর': 'Centralnagar',
+    'জামালগঞ্জ': 'Jamalganj',
+    'বিশ্বম্ভরপুর': 'Bishbambharapur',
+    'তাজহাট': 'Tajahat',
+    'মাহিগঞ্জ': 'Mahiganj',
+    'হারাগাছ': 'Haragach',
+    'হাজীরহাট': 'Hajirahat',
+    'গঙ্গাচড়া': 'Ganggachara',
+    'তারাগঞ্জ': 'Taraganj',
+    'পীরগাছা': 'Pirgachha',
+    'বিরল': 'Biral',
+    'বোচাগঞ্জ': 'Bochaganj',
+    'কাহারোল': 'Kaharol',
+    'খানসামা': 'Khansama',
+    'চিরিরবন্দর': 'Chirirbandar',
+    'হাকিমপুর': 'Hakimpur',
+    'ঘোড়াঘাট': 'Ghoraghat',
+    'গাইবান্ধা সদর': 'Gaibandha Sadar',
+    'সাদুল্লাপুর': 'Sadullapur',
+    'সুন্দরগঞ্জ': 'Sundarganj',
+    'গোবিন্দগঞ্জ': 'Gobindaganj',
+    'পলাশবাড়ী': 'Palashbari',
+    'সাঘাটা': 'Sughatta',
+    'ফুলছড়ি': 'Phulachhari',
+    'ঠাকুরগাঁও সদর': 'Thakurgaon Sadar',
+    'রাণীশংকৈল': 'Ranishangakoil',
+    'বালিয়াডাঙ্গী': 'Baliyadanggi',
+    'হরিপুর': 'Haripur',
+    'পঞ্চগড় সদর': 'Panchagarh Sadar',
+    'বোদা': 'Boda',
+    'দেবীগঞ্জ': 'Debiganj',
+    'তেঁতুলিয়া': 'Tetulia',
+    'আটোয়ারী': 'Atoyari',
+    'লালমনিরহাট সদর': 'Lalmonirhat Sadar',
+    'আদিতমারী': 'Aditmari',
+    'হাতীবান্ধা': 'Hatibandha',
+    'পাটগ্রাম': 'Patgram',
   };
 
   static final Map<String, String> enToBnUpazilas = {
@@ -602,19 +979,124 @@ class AppStrings {
     }
   }
 
+    static String normalizeBn(String input) {
+    return input
+        .replaceAll('\u09af\u09bc', '\u09df') // য + nukta -> য়
+        .replaceAll('\u09b0\u09bc', '\u09dc') // র + nukta -> ড়
+        .replaceAll('\u09a1\u09bc', '\u09dc') // ড + nukta -> ড়
+        .replaceAll('\u09a2\u09bc', '\u09dd') // ঢ + nukta -> ঢ়
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static String transliterateBnToEn(String raw) {
+    if (raw.trim().isEmpty) return raw;
+    String str = raw
+        .replaceAll('পৌরসভা', 'Pourashava')
+        .replaceAll('ইউনিয়ন', 'Union')
+        .replaceAll(RegExp(r'ওয়ার্ড|ওয়ার্ড|ওয়র্ড|ওয়াড'), 'Ward')
+        .replaceAll('সদর', 'Sadar')
+        .replaceAll('উত্তর', 'North')
+        .replaceAll('দক্ষিণ', 'South')
+        .replaceAll('পূর্ব', 'East')
+        .replaceAll('পশ্চিম', 'West')
+        .replaceAll('মধ্য', 'Central');
+
+    const bnDigits = {
+      '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+      '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+    };
+    bnDigits.forEach((k, v) => str = str.replaceAll(k, v));
+
+    const kar = {
+      'া': 'a', 'ি': 'i', 'ী': 'i', 'ু': 'u', 'ূ': 'u',
+      'ৃ': 'ri', 'ে': 'e', 'ৈ': 'oi', 'ো': 'o', 'ৌ': 'ou'
+    };
+
+    const swara = {
+      'অ': 'o', 'আ': 'a', 'ই': 'i', 'ঈ': 'i', 'উ': 'u',
+      'ঊ': 'u', 'ঋ': 'ri', 'এ': 'e', 'ঐ': 'oi', 'ও': 'o', 'ঔ': 'ou'
+    };
+
+    const byanjan = {
+      'ক': 'k', 'খ': 'kh', 'গ': 'g', 'ঘ': 'gh', 'ঙ': 'ng',
+      'চ': 'ch', 'ছ': 'chh', 'জ': 'j', 'ঝ': 'jh', 'ঞ': 'n',
+      'ট': 't', 'ঠ': 'th', 'ড': 'd', 'ঢ': 'dh', 'ণ': 'n',
+      'ত': 't', 'থ': 'th', 'দ': 'd', 'ধ': 'dh', 'ন': 'n',
+      'প': 'p', 'ফ': 'ph', 'ব': 'b', 'ভ': 'bh', 'ম': 'm',
+      'য': 'j', 'র': 'r', 'ল': 'l', 'শ': 'sh', 'ষ': 'sh', 'স': 's',
+      'হ': 'h', 'ড়': 'r', 'ঢ়': 'rh', 'য়': 'y', 'ৎ': 't',
+      'ং': 'ng', 'ঃ': 'h', 'ঁ': ''
+    };
+
+    str = normalizeBn(str);
+
+    final sb = StringBuffer();
+    final runes = str.runes.toList();
+    final len = runes.length;
+
+    for (int i = 0; i < len; i++) {
+      final ch = String.fromCharCode(runes[i]);
+      if (swara.containsKey(ch)) {
+        sb.write(swara[ch]);
+      } else if (byanjan.containsKey(ch)) {
+        final cons = byanjan[ch]!;
+        final next = (i + 1 < len) ? String.fromCharCode(runes[i + 1]) : '';
+        if (next == '্') {
+          sb.write(cons);
+          i++;
+        } else if (kar.containsKey(next)) {
+          sb.write(cons);
+          sb.write(kar[next]);
+          i++;
+        } else if (byanjan.containsKey(next) || swara.containsKey(next) || next == ' ' || next == '' || next == ',' || next == '-' || next == '.') {
+          if (next == ' ' || next == '' || next == ',' || next == '-' || next == '.') {
+            sb.write(cons);
+          } else {
+            sb.write('${cons}a');
+          }
+        } else {
+          sb.write(cons);
+        }
+      } else if (kar.containsKey(ch)) {
+        sb.write(kar[ch]);
+      } else {
+        sb.write(ch);
+      }
+    }
+
+    final words = sb.toString().split(' ');
+    final capitalized = words.map((w) {
+      if (w.isEmpty) return w;
+      return w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : '');
+    }).join(' ');
+
+    return capitalized.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
   static String translateDivisionStatic(String raw, bool toBengali) {
     final clean = raw.trim();
     if (clean.isEmpty) return clean;
     final lower = clean.toLowerCase();
+    final norm = normalizeBn(clean);
 
     if (toBengali) {
       if (enToBnDivisions.containsKey(lower)) {
         return enToBnDivisions[lower]!;
       }
-      return clean;
+      if (bnToEnDivisions.containsKey(clean) || bnToEnDivisions.containsKey(norm)) {
+        final en = (bnToEnDivisions[clean] ?? bnToEnDivisions[norm])!.toLowerCase();
+        if (enToBnDivisions.containsKey(en)) {
+          return enToBnDivisions[en]!;
+        }
+      }
+      return norm;
     } else {
       if (bnToEnDivisions.containsKey(clean)) {
         return bnToEnDivisions[clean]!;
+      }
+      if (bnToEnDivisions.containsKey(norm)) {
+        return bnToEnDivisions[norm]!;
       }
       if (enToBnDivisions.containsKey(lower)) {
         final bn = enToBnDivisions[lower]!;
@@ -630,15 +1112,32 @@ class AppStrings {
     final clean = raw.trim();
     if (clean.isEmpty) return clean;
     final lower = clean.toLowerCase();
+    final norm = normalizeBn(clean);
 
     if (toBengali) {
       if (enToBnDistricts.containsKey(lower)) {
         return enToBnDistricts[lower]!;
       }
-      return clean;
+      for (final entry in bnToEnDistricts.entries) {
+        if (normalizeBn(entry.key) == norm) {
+          final en = entry.value.toLowerCase();
+          if (enToBnDistricts.containsKey(en)) {
+            return enToBnDistricts[en]!;
+          }
+        }
+      }
+      return norm;
     } else {
       if (bnToEnDistricts.containsKey(clean)) {
         return bnToEnDistricts[clean]!;
+      }
+      if (bnToEnDistricts.containsKey(norm)) {
+        return bnToEnDistricts[norm]!;
+      }
+      for (final entry in bnToEnDistricts.entries) {
+        if (normalizeBn(entry.key) == norm) {
+          return entry.value;
+        }
       }
       if (enToBnDistricts.containsKey(lower)) {
         final bn = enToBnDistricts[lower]!;
@@ -654,23 +1153,115 @@ class AppStrings {
     final clean = raw.trim();
     if (clean.isEmpty) return clean;
     final lower = clean.toLowerCase();
+    final norm = normalizeBn(clean);
 
     if (toBengali) {
       if (enToBnUpazilas.containsKey(lower)) {
         return enToBnUpazilas[lower]!;
       }
-      return clean;
+      for (final entry in enToBnUpazilas.entries) {
+        if (entry.key == lower || entry.key.replaceAll('-', ' ') == lower.replaceAll('-', ' ')) {
+          return entry.value;
+        }
+      }
+      return norm;
     } else {
       if (bnToEnUpazilas.containsKey(clean)) {
         return bnToEnUpazilas[clean]!;
       }
-      if (enToBnUpazilas.containsKey(lower)) {
-        final bn = enToBnUpazilas[lower]!;
-        if (bnToEnUpazilas.containsKey(bn)) {
-          return bnToEnUpazilas[bn]!;
+      if (bnToEnUpazilas.containsKey(norm)) {
+        return bnToEnUpazilas[norm]!;
+      }
+      for (final entry in bnToEnUpazilas.entries) {
+        if (normalizeBn(entry.key) == norm) {
+          return entry.value;
         }
       }
-      return clean;
+      // If still not matched, check if input is already English
+      final hasBengali = RegExp(r'[\u0980-\u09FF]').hasMatch(clean);
+      if (!hasBengali) {
+        return clean;
+      }
+      // Guaranteed transliteration fallback so NO Bengali script is shown in English mode
+      return transliterateBnToEn(clean);
+    }
+  }
+
+  static String translateUnionStatic(String raw, bool toBengali) {
+    final clean = raw.trim();
+    if (clean.isEmpty) return clean;
+
+    if (!toBengali) {
+      // Bengali to English
+      String u = clean
+          .replaceAll('পৌরসভা', 'Pourashava')
+          .replaceAll('ইউনিয়ন', 'Union')
+          .replaceAll(RegExp(r'ওয়ার্ড|ওয়ার্ড|ওয়র্ড|ওয়াড'), 'Ward')
+          .replaceAll('সদর', 'Sadar')
+          .replaceAll('উত্তর', 'North')
+          .replaceAll('দক্ষিণ', 'South')
+          .replaceAll('পূর্ব', 'East')
+          .replaceAll('পশ্চিম', 'West')
+          .replaceAll('মধ্য', 'Central');
+
+      const bnDigits = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+      };
+      bnDigits.forEach((k, v) => u = u.replaceAll(k, v));
+
+      final hasBengali = RegExp(r'[\u0980-\u09FF]').hasMatch(u);
+      if (hasBengali) {
+        return transliterateBnToEn(u);
+      }
+      return u;
+    } else {
+      // English to Bengali
+      String u = clean
+          .replaceAll(RegExp(r'\bPourashava\b', caseSensitive: false), 'পৌরসভা')
+          .replaceAll(RegExp(r'\bMunicipality\b', caseSensitive: false), 'পৌরসভা')
+          .replaceAll(RegExp(r'\bUnion\b', caseSensitive: false), 'ইউনিয়ন')
+          .replaceAll(RegExp(r'\bWard\b', caseSensitive: false), 'ওয়ার্ড')
+          .replaceAll(RegExp(r'\bSadar\b', caseSensitive: false), 'সদর')
+          .replaceAll(RegExp(r'\bNorth\b', caseSensitive: false), 'উত্তর')
+          .replaceAll(RegExp(r'\bSouth\b', caseSensitive: false), 'দক্ষিণ')
+          .replaceAll(RegExp(r'\bEast\b', caseSensitive: false), 'পূর্ব')
+          .replaceAll(RegExp(r'\bWest\b', caseSensitive: false), 'পশ্চিম')
+          .replaceAll(RegExp(r'\bCentral\b', caseSensitive: false), 'মধ্য');
+
+      const enDigits = {
+        '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+        '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+      };
+      enDigits.forEach((k, v) => u = u.replaceAll(k, v));
+      return u;
+    }
+  }
+
+  static String translateWardStatic(String raw, bool toBengali) {
+    final clean = raw.trim();
+    if (clean.isEmpty) return clean;
+
+    if (!toBengali) {
+      String w = clean
+          .replaceAll('ওয়ার্ড', 'Ward')
+          .replaceAll('ওয়ার্ড', 'Ward')
+          .replaceAll('ওয়র্ড', 'Ward')
+          .replaceAll('ওয়াড', 'Ward');
+      const bnDigits = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+      };
+      bnDigits.forEach((k, v) => w = w.replaceAll(k, v));
+      return w;
+    } else {
+      String w = clean.replaceAll(RegExp(r'\bWard\b', caseSensitive: false), 'ওয়ার্ড');
+      const enDigits = {
+        '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+        '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+      };
+      enDigits.forEach((k, v) => w = w.replaceAll(k, v));
+      return w;
     }
   }
 
@@ -681,22 +1272,22 @@ class AppStrings {
 
   static bool areSameDivision(String a, String b) {
     if (a.toLowerCase().trim() == b.toLowerCase().trim()) return true;
-    final bnA = toBengaliDivision(a);
-    final bnB = toBengaliDivision(b);
+    final bnA = normalizeBn(toBengaliDivision(a));
+    final bnB = normalizeBn(toBengaliDivision(b));
     return bnA.isNotEmpty && bnA == bnB;
   }
 
   static bool areSameDistrict(String a, String b) {
     if (a.toLowerCase().trim() == b.toLowerCase().trim()) return true;
-    final bnA = toBengaliDistrict(a);
-    final bnB = toBengaliDistrict(b);
+    final bnA = normalizeBn(toBengaliDistrict(a));
+    final bnB = normalizeBn(toBengaliDistrict(b));
     return bnA.isNotEmpty && bnA == bnB;
   }
 
   static bool areSameUpazila(String a, String b) {
     if (a.toLowerCase().trim() == b.toLowerCase().trim()) return true;
-    final bnA = translateUpazilaStatic(a, true);
-    final bnB = translateUpazilaStatic(b, true);
+    final bnA = normalizeBn(translateUpazilaStatic(a, true));
+    final bnB = normalizeBn(translateUpazilaStatic(b, true));
     return bnA.isNotEmpty && bnA == bnB;
   }
 
@@ -1010,6 +1601,6 @@ class AppStrings {
   String get footerHelplineTitle => isBn ? 'সহায়তা ও যোগাযোগ' : 'Help & Contact';
   String get footerHelplineNumber => '01677234252';
   String get footerCopyright => isBn
-      ? '© 2026 ঝটপট ডিরেক্টরি। সর্বস্বত্ব সংরক্ষিত।'
-      : '© 2026 Jotpot Directory. All rights reserved.';
+      ? '©  ঝটপট ডিরেক্টরি। সর্বস্বত্ব সংরক্ষিত।'
+      : '©  Jotpot Directory. All rights reserved.';
 }

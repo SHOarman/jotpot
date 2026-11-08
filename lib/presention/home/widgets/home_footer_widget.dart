@@ -89,7 +89,7 @@ class HomeFooterWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            strings.isBn ? (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText) : strings.footerAboutText,
+                            settings.getFooterAboutText(strings.isBn, strings),
                             style: const TextStyle(
                               color: AppColors.textMuted,
                               fontSize: 14,
@@ -263,7 +263,7 @@ class HomeFooterWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  strings.isBn ? (settings.footerAboutText.isNotEmpty ? settings.footerAboutText : strings.footerAboutText) : strings.footerAboutText,
+                  settings.getFooterAboutText(strings.isBn, strings),
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 14,
@@ -359,7 +359,7 @@ class HomeFooterWidget extends StatelessWidget {
               // Copyright (always centered)
               Center(
                 child: Text(
-                  strings.isBn ? (settings.footerCopyright.isNotEmpty ? settings.footerCopyright : strings.footerCopyright) : strings.footerCopyright,
+                  settings.getFooterCopyright(strings.isBn, strings),
                   style: const TextStyle(
                     color: AppColors.textHint,
                     fontSize: 13,

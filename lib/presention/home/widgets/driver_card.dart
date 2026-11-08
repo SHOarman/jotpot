@@ -391,21 +391,11 @@ class DriverCard extends StatelessWidget {
     String areaPart = '';
 
     if (rawUnion.isNotEmpty) {
-      if (!strings.isBn) {
-        String u = rawUnion
-            .replaceAll('পৌরসভা', 'Pourashava')
-            .replaceAll('পৌরসভা', 'Pourashava')
-            .replaceAll('ইউনিয়ন', 'Union')
-            .replaceAll('ইউনিয়ন', 'Union')
-            .replaceAll('সদর', 'Sadar');
-        areaPart = u;
-      } else {
-        areaPart = rawUnion;
-      }
+      areaPart = strings.translateUnion(rawUnion);
     }
 
     if (rawWard.isNotEmpty) {
-      final wardStr = strings.isBn ? 'ওয়ার্ড $rawWard' : 'Ward $rawWard';
+      final wardStr = strings.translateWard(rawWard);
       areaPart = areaPart.isNotEmpty ? '$areaPart, $wardStr' : wardStr;
     }
 
@@ -431,7 +421,7 @@ class DriverCard extends StatelessWidget {
     if (parts.isNotEmpty) {
       return parts.join(', ');
     }
-    return driver.address;
+    return strings.isBn ? driver.address : AppStrings.transliterateBnToEn(driver.address);
   }
 
   @override

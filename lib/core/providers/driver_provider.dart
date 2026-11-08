@@ -129,10 +129,33 @@ class DriverProvider extends ChangeNotifier {
   String? get selectedUnion => _selectedUnion;
   String? get selectedWard => _selectedWard;
   bool get isBengali => _isBengali;
-  List<String> get unions => _unions;
+  List<String> get unions => _isBengali
+      ? _unions
+      : _unions.map((u) => AppStrings.translateUnionStatic(u, false)).toList();
   bool get isLoadingUnions => _isLoadingUnions;
   bool get isUnityMode => _isUnityMode;
-  String get noticeText => _noticeText;
+  String get noticeText => getNoticeText(_isBengali);
+
+  String getNoticeText(bool isBn) {
+    if (isBn) {
+      if (_globalSettings.liveBannerText.isNotEmpty) {
+        return _globalSettings.liveBannerText;
+      }
+      if (_noticeText.isNotEmpty) return _noticeText;
+      final phone = _globalSettings.contactPhone.isNotEmpty
+          ? _globalSettings.contactPhone
+          : '01677234297';
+      return 'যেকোনো প্রয়োজন বা সহায়তার জন্য ঝটপট-এর সাথে সরাসরি যোগাযোগ করুন। কল করুন: $phone';
+    } else {
+      if (_globalSettings.liveBannerTextEn.isNotEmpty) {
+        return _globalSettings.liveBannerTextEn;
+      }
+      final phone = _globalSettings.contactPhone.isNotEmpty
+          ? _globalSettings.contactPhone
+          : '01677234297';
+      return 'For any inquiry or assistance, please contact Jotpot directly. Call: $phone';
+    }
+  }
   GlobalSettingsModel get globalSettings => _globalSettings;
   List<VehicleTypeModel> get vehicleTypeModels => _vehicleTypeModels;
 
@@ -195,10 +218,17 @@ class DriverProvider extends ChangeNotifier {
     return getUpazilasForDistrict(_selectedDivision!, _selectedDistrict!);
   }
 
-  // Helper for Cascading Districts (Used by Filter Section & Registration Dialog)
+    // Helper for Cascading Districts (Used by Filter Section & Registration Dialog)
   List<String> getDistrictsForDivision(String division) {
-    final bnDivision = AppStrings.toBengaliDivision(division);
-    final rawDistricts = geoHierarchy[bnDivision]?.keys.toList() ?? [];
+    Map<String, List<String>>? districtMap;
+    for (final entry in geoHierarchy.entries) {
+      if (AppStrings.areSameDivision(entry.key, division)) {
+        districtMap = entry.value;
+        break;
+      }
+    }
+    districtMap ??= geoHierarchy[AppStrings.toBengaliDivision(division)];
+    final rawDistricts = districtMap?.keys.toList() ?? [];
     if (_isBengali) {
       return rawDistricts;
     } else {
@@ -210,9 +240,23 @@ class DriverProvider extends ChangeNotifier {
 
   // Helper for Cascading Upazilas (Used by Filter Section & Registration Dialog)
   List<String> getUpazilasForDistrict(String division, String district) {
-    final bnDivision = AppStrings.toBengaliDivision(division);
-    final bnDistrict = AppStrings.toBengaliDistrict(district);
-    final rawUpazilas = geoHierarchy[bnDivision]?[bnDistrict] ?? [];
+    Map<String, List<String>>? districtMap;
+    for (final entry in geoHierarchy.entries) {
+      if (AppStrings.areSameDivision(entry.key, division)) {
+        districtMap = entry.value;
+        break;
+      }
+    }
+    List<String>? upazilaList;
+    if (districtMap != null) {
+      for (final entry in districtMap.entries) {
+        if (AppStrings.areSameDistrict(entry.key, district)) {
+          upazilaList = entry.value;
+          break;
+        }
+      }
+    }
+    final rawUpazilas = upazilaList ?? [];
     if (_isBengali) {
       return rawUpazilas
           .map((u) => AppStrings.translateUpazilaStatic(u, true))
@@ -224,17 +268,29 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
-  List<String> get wards => [
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§ª',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§«',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¬',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§­',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§®',
-        'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¯',
-      ];
+  List<String> get wards => _isBengali
+      ? const [
+          'ওয়ার্ড ১',
+          'ওয়ার্ড ২',
+          'ওয়ার্ড ৩',
+          'ওয়ার্ড ৪',
+          'ওয়ার্ড ৫',
+          'ওয়ার্ড ৬',
+          'ওয়ার্ড ৭',
+          'ওয়ার্ড ৮',
+          'ওয়ার্ড ৯',
+        ]
+      : const [
+          'Ward 1',
+          'Ward 2',
+          'Ward 3',
+          'Ward 4',
+          'Ward 5',
+          'Ward 6',
+          'Ward 7',
+          'Ward 8',
+          'Ward 9',
+        ];
 
   /// Filtered drivers getter
   List<DriverModel> get filteredDrivers {
@@ -468,10 +524,13 @@ class DriverProvider extends ChangeNotifier {
     _isLoadingUnions = true;
     notifyListeners();
     try {
+      final bnDivision = _selectedDivision != null ? AppStrings.toBengaliDivision(_selectedDivision!) : '';
+      final bnDistrict = _selectedDistrict != null ? AppStrings.toBengaliDistrict(_selectedDistrict!) : '';
+      final bnUpazila = AppStrings.translateUpazilaStatic(upazila, true);
       _unions = await UnionApiService.getUnions(
-        divisionBn: _selectedDivision ?? '',
-        districtBn: _selectedDistrict ?? '',
-        upazilaName: upazila,
+        divisionBn: bnDivision,
+        districtBn: bnDistrict,
+        upazilaName: bnUpazila,
       );
     } catch (e) {
       debugPrint('DriverProvider _fetchUnions error: $e');
@@ -523,6 +582,12 @@ class DriverProvider extends ChangeNotifier {
     if (_selectedVehicleType != null) {
       _selectedVehicleType = AppStrings.translateVehicleTypeStatic(
           _selectedVehicleType!, _isBengali);
+    }
+    if (_selectedUnion != null) {
+      _selectedUnion = AppStrings.translateUnionStatic(_selectedUnion!, _isBengali);
+    }
+    if (_selectedWard != null) {
+      _selectedWard = AppStrings.translateWardStatic(_selectedWard!, _isBengali);
     }
     notifyListeners();
   }

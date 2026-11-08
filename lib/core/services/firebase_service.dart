@@ -118,6 +118,8 @@ class FirebaseService {
       'vehicleLength': vehicleLength.trim(),
       'vehicleCapacity': vehicleCapacity.trim(),
       'isActive': false,
+      'isFreeDriver': amount <= 0 || transactionId.trim() == 'FREE_REGISTRATION' || durationDays >= 3650,
+      'durationDays': durationDays,
       'expiryDate': DateTime.now().add(Duration(days: durationDays)),
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),

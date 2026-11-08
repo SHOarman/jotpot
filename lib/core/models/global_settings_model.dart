@@ -1,3 +1,5 @@
+import '../../utils/app_strings.dart';
+
 class GlobalSettingsModel {
   final String paymentInstructions;
   final bool automatedPayment;
@@ -7,6 +9,7 @@ class GlobalSettingsModel {
   final num discount1Year;
   final bool showLiveBanner;
   final String liveBannerText;
+  final String liveBannerTextEn;
   final bool allVehiclesFree;
 
   // Dynamic Contact & Info
@@ -14,7 +17,7 @@ class GlobalSettingsModel {
   final String contactEmail;
   final String contactAddress;
 
-  // Dynamic Policies & Terms (custom content from admin)
+  // Custom Legal & Policy Content
   final String privacyPolicyCustomBn;
   final String privacyPolicyCustomEn;
   final String termsConditionsCustomBn;
@@ -24,7 +27,11 @@ class GlobalSettingsModel {
 
   // Dynamic Footer & Policy Titles (from admin)
   final String footerCopyright;
+  final String footerCopyrightBn;
+  final String footerCopyrightEn;
   final String footerAboutText;
+  final String footerAboutTextBn;
+  final String footerAboutTextEn;
   final String privacyPolicyTitle;
   final String termsConditionsTitle;
   final String aboutUsTitle;
@@ -39,6 +46,7 @@ class GlobalSettingsModel {
     this.discount1Year = 0,
     this.showLiveBanner = false,
     this.liveBannerText = '',
+    this.liveBannerTextEn = '',
     this.allVehiclesFree = false,
     this.contactPhone = '01677234252',
     this.contactEmail = 'support@jotpot.com',
@@ -50,7 +58,11 @@ class GlobalSettingsModel {
     this.aboutUsCustomBn = '',
     this.aboutUsCustomEn = '',
     this.footerCopyright = '',
+    this.footerCopyrightBn = '',
+    this.footerCopyrightEn = '',
     this.footerAboutText = '',
+    this.footerAboutTextBn = '',
+    this.footerAboutTextEn = '',
     this.privacyPolicyTitle = '',
     this.termsConditionsTitle = '',
     this.aboutUsTitle = '',
@@ -64,6 +76,26 @@ class GlobalSettingsModel {
         (map['contactEmail'] ?? map['email'] ?? '').toString().trim();
     final address =
         (map['contactAddress'] ?? map['address'] ?? '').toString().trim();
+
+    final copyBn = (map['footerCopyrightBn'] ??
+            map['footerCopyright'] ??
+            map['copyrightText'] ??
+            '')
+        .toString()
+        .trim();
+    final copyEn = (map['footerCopyrightEn'] ?? '').toString().trim();
+
+    final aboutBn = (map['footerAboutTextBn'] ??
+            map['footerAboutText'] ??
+            map['footerAbout'] ??
+            '')
+        .toString()
+        .trim();
+    final aboutEn = (map['footerAboutTextEn'] ??
+            map['footerAboutEn'] ??
+            '')
+        .toString()
+        .trim();
 
     return GlobalSettingsModel(
       paymentInstructions: instructions.isNotEmpty
@@ -83,6 +115,7 @@ class GlobalSettingsModel {
       discount1Year: (map['discount1Year'] as num?) ?? 0,
       showLiveBanner: map['showLiveBanner'] == true,
       liveBannerText: (map['liveBannerText'] ?? '').toString(),
+      liveBannerTextEn: (map['liveBannerTextEn'] ?? '').toString(),
       allVehiclesFree: map['allVehiclesFree'] == true || map['allVehiclesFree'] == 'true',
       contactPhone: phone.isNotEmpty ? phone : '01677234252',
       contactEmail: email.isNotEmpty ? email : 'support@jotpot.com',
@@ -110,17 +143,12 @@ class GlobalSettingsModel {
       aboutUsCustomEn: (map['aboutUsEn'] ?? map['aboutUsCustomEn'] ?? '')
           .toString()
           .trim(),
-      footerCopyright: (map['footerCopyright'] ??
-              map['footerCopyrightBn'] ??
-              map['copyrightText'] ??
-              '')
-          .toString()
-          .trim(),
-      footerAboutText: (map['footerAboutText'] ??
-              map['footerAboutTextBn'] ??
-              '')
-          .toString()
-          .trim(),
+      footerCopyright: copyBn.isNotEmpty ? copyBn : copyEn,
+      footerCopyrightBn: copyBn,
+      footerCopyrightEn: copyEn,
+      footerAboutText: aboutBn.isNotEmpty ? aboutBn : aboutEn,
+      footerAboutTextBn: aboutBn,
+      footerAboutTextEn: aboutEn,
       privacyPolicyTitle: (map['privacyPolicyTitleBn'] ??
               map['privacyPolicyTitle'] ??
               '')
@@ -137,5 +165,27 @@ class GlobalSettingsModel {
           .toString()
           .trim(),
     );
+  }
+
+  String getFooterAboutText(bool isBn, AppStrings strings) {
+    if (isBn) {
+      if (footerAboutTextBn.isNotEmpty) return footerAboutTextBn;
+      if (footerAboutText.isNotEmpty) return footerAboutText;
+      return strings.footerAboutText;
+    } else {
+      if (footerAboutTextEn.isNotEmpty) return footerAboutTextEn;
+      return strings.footerAboutText;
+    }
+  }
+
+  String getFooterCopyright(bool isBn, AppStrings strings) {
+    if (isBn) {
+      if (footerCopyrightBn.isNotEmpty) return footerCopyrightBn;
+      if (footerCopyright.isNotEmpty) return footerCopyright;
+      return strings.footerCopyright;
+    } else {
+      if (footerCopyrightEn.isNotEmpty) return footerCopyrightEn;
+      return strings.footerCopyright;
+    }
   }
 }
