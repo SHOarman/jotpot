@@ -25,6 +25,12 @@ class DriverProvider extends ChangeNotifier {
   String? _selectedUnion;
   String? _selectedWard;
 
+  // Extra Feature Filters (Covered, Length, Air Ambulance, Self Driving)
+  bool _isCoveredFilter = false;
+  String _vehicleLengthFilter = '';
+  bool _isAirAmbulanceFilter = false;
+  bool _isSelfDrivingFilter = false;
+
   // Union dropdown state (loaded from BD API when upazila is selected)
   List<String> _unions = [];
   bool _isLoadingUnions = false;
@@ -129,6 +135,30 @@ class DriverProvider extends ChangeNotifier {
   String? get selectedUnion => _selectedUnion;
   String? get selectedWard => _selectedWard;
   bool get isBengali => _isBengali;
+
+  // Extra Feature Filters Getters & State Helpers
+  bool get isCoveredFilter => _isCoveredFilter;
+  String get vehicleLengthFilter => _vehicleLengthFilter;
+  bool get isAirAmbulanceFilter => _isAirAmbulanceFilter;
+  bool get isSelfDrivingFilter => _isSelfDrivingFilter;
+
+  bool get isSelectedTruckOrPickup {
+    if (_selectedVehicleType == null) return false;
+    final v = _selectedVehicleType!.trim().toLowerCase();
+    return v == 'truck' || v == 'pickup' || v.contains('ট্রাক') || v.contains('পিকআপ') || v.contains('কাভার্ড');
+  }
+
+  bool get isSelectedHelicopter {
+    if (_selectedVehicleType == null) return false;
+    final v = _selectedVehicleType!.trim().toLowerCase();
+    return v == 'helicopter' || v.contains('হেলিকপ্টার');
+  }
+
+  bool get isSelectedMotorcycleOrCar {
+    if (_selectedVehicleType == null) return false;
+    final v = _selectedVehicleType!.trim().toLowerCase();
+    return v == 'motorcycle' || v == 'bike' || v == 'car' || v == 'private car' || v.contains('মোটরসাইকেল') || v.contains('বাইক') || v.contains('কার') || v.contains('প্রাইভেট');
+  }
   List<String> get unions => _isBengali
       ? _unions
       : _unions.map((u) => AppStrings.translateUnionStatic(u, false)).toList();
@@ -404,6 +434,32 @@ class DriverProvider extends ChangeNotifier {
           driver.ward.toLowerCase().contains(_selectedWard!.trim().toLowerCase()) ||
           driver.address.toLowerCase().contains(_selectedWard!.trim().toLowerCase());
 
+      // Feature specific filters
+      if (_isCoveredFilter && !driver.isCovered) {
+        return false;
+      }
+      if (_isCoveredFilter && _vehicleLengthFilter.trim().isNotEmpty) {
+        final search = _vehicleLengthFilter.trim().toLowerCase();
+        final searchDigits = search.replaceAll(RegExp(r'[^0-9]'), '');
+        final dLen = driver.vehicleLength.trim().toLowerCase();
+        final dDigits = dLen.replaceAll(RegExp(r'[^0-9]'), '');
+        if (searchDigits.isNotEmpty && dDigits.isNotEmpty) {
+          if (!dDigits.contains(searchDigits) && !dLen.contains(search)) {
+            return false;
+          }
+        } else {
+          if (!dLen.contains(search)) {
+            return false;
+          }
+        }
+      }
+      if (_isAirAmbulanceFilter && !driver.isAirAmbulance) {
+        return false;
+      }
+      if (_isSelfDrivingFilter && !driver.isSelfDriving) {
+        return false;
+      }
+
       return matchesSearch &&
           matchesVehicle &&
           matchesDivision &&
@@ -482,6 +538,38 @@ class DriverProvider extends ChangeNotifier {
 
   void setVehicleType(String? val) {
     _selectedVehicleType = val;
+    // Reset vehicle-specific sub-filters when vehicle type changes
+    _isCoveredFilter = false;
+    _vehicleLengthFilter = '';
+    _isAirAmbulanceFilter = false;
+    _isSelfDrivingFilter = false;
+    _searchCycleCounter++;
+    notifyListeners();
+  }
+
+  void setIsCoveredFilter(bool val) {
+    _isCoveredFilter = val;
+    if (!val) {
+      _vehicleLengthFilter = '';
+    }
+    _searchCycleCounter++;
+    notifyListeners();
+  }
+
+  void setVehicleLengthFilter(String val) {
+    _vehicleLengthFilter = val;
+    _searchCycleCounter++;
+    notifyListeners();
+  }
+
+  void setIsAirAmbulanceFilter(bool val) {
+    _isAirAmbulanceFilter = val;
+    _searchCycleCounter++;
+    notifyListeners();
+  }
+
+  void setIsSelfDrivingFilter(bool val) {
+    _isSelfDrivingFilter = val;
     _searchCycleCounter++;
     notifyListeners();
   }
@@ -561,6 +649,10 @@ class DriverProvider extends ChangeNotifier {
     _selectedUpazila = null;
     _selectedUnion = null;
     _selectedWard = null;
+    _isCoveredFilter = false;
+    _vehicleLengthFilter = '';
+    _isAirAmbulanceFilter = false;
+    _isSelfDrivingFilter = false;
     notifyListeners();
   }
 
