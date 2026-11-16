@@ -31,7 +31,7 @@ class DriverProvider extends ChangeNotifier {
   bool _isAirAmbulanceFilter = false;
   bool _isSelfDrivingFilter = false;
 
-  // Union dropdown state (loaded from BD API when upazila is selected)
+  // Union dropdown state (live Firestore data with bundled fallback)
   List<String> _unions = [];
   bool _isLoadingUnions = false;
 
@@ -47,6 +47,7 @@ class DriverProvider extends ChangeNotifier {
   StreamSubscription? _driverSubscription;
   StreamSubscription? _settingsSubscription;
   StreamSubscription? _vehicleTypesSubscription;
+  StreamSubscription<List<String>>? _unionSubscription;
 
   DriverProvider() {
     loadDrivers();
@@ -121,6 +122,7 @@ class DriverProvider extends ChangeNotifier {
     _driverSubscription?.cancel();
     _settingsSubscription?.cancel();
     _vehicleTypesSubscription?.cancel();
+    _unionSubscription?.cancel();
     super.dispose();
   }
 
@@ -575,6 +577,7 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void setDivision(String? val) {
+    _unionSubscription?.cancel();
     _selectedDivision = val;
     _searchCycleCounter++;
     _selectedDistrict = null; // Reset child district
@@ -586,6 +589,7 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void setDistrict(String? val) {
+    _unionSubscription?.cancel();
     _selectedDistrict = val;
     _searchCycleCounter++;
     _selectedUpazila = null;  // Reset child upazila
@@ -596,37 +600,50 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void setUpazila(String? val) {
+    _unionSubscription?.cancel();
     _selectedUpazila = val;
     _searchCycleCounter++;
     _selectedUnion = null; // Reset union when upazila changes
     _unions = [];
-    // Fetch unions from BD API when upazila is selected
+    // Subscribe to Firestore union changes for the selected upazila.
     if (val != null) {
       _fetchUnions(val);
     }
     notifyListeners();
   }
 
-  /// Fetch union list from BD API for the currently selected upazila.
-  Future<void> _fetchUnions(String upazila) async {
+  /// Listen for union list updates for the currently selected upazila.
+  void _fetchUnions(String upazila) {
     _isLoadingUnions = true;
     notifyListeners();
-    try {
-      final bnDivision = _selectedDivision != null ? AppStrings.toBengaliDivision(_selectedDivision!) : '';
-      final bnDistrict = _selectedDistrict != null ? AppStrings.toBengaliDistrict(_selectedDistrict!) : '';
-      final bnUpazila = AppStrings.translateUpazilaStatic(upazila, true);
-      _unions = await UnionApiService.getUnions(
+    final bnDivision = _selectedDivision != null
+        ? AppStrings.toBengaliDivision(_selectedDivision!)
+        : '';
+    final bnDistrict = _selectedDistrict != null
+        ? AppStrings.toBengaliDistrict(_selectedDistrict!)
+        : '';
+    final bnUpazila = AppStrings.translateUpazilaStatic(upazila, true);
+    _unionSubscription = UnionApiService.watchUnions(
         divisionBn: bnDivision,
         districtBn: bnDistrict,
         upazilaName: bnUpazila,
-      );
-    } catch (e) {
-      debugPrint('DriverProvider _fetchUnions error: $e');
-      _unions = [];
-    } finally {
-      _isLoadingUnions = false;
-      notifyListeners();
-    }
+      ).listen((unions) {
+        if (_selectedUpazila != upazila) return;
+        _unions = unions;
+        _isLoadingUnions = false;
+        notifyListeners();
+      }, onError: (Object error) async {
+        debugPrint('DriverProvider union listener error: $error');
+        final fallback = await UnionApiService.getUnions(
+          divisionBn: bnDivision,
+          districtBn: bnDistrict,
+          upazilaName: bnUpazila,
+        );
+        if (_selectedUpazila != upazila) return;
+        _unions = fallback;
+        _isLoadingUnions = false;
+        notifyListeners();
+      });
   }
 
   void setUnion(String? val) {
