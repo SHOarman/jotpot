@@ -24,14 +24,42 @@ class HomeFooterWidget extends StatelessWidget {
     );
   }
 
+  static Widget _buildBrandLogo() {
+    return RichText(
+      text: const TextSpan(
+        children: [
+          TextSpan(
+            text: 'JOT',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textDark,
+              letterSpacing: 0.5,
+            ),
+          ),
+          TextSpan(
+            text: 'POT',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primaryOrange,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DriverProvider>(context);
     final strings = AppStrings.of(context);
     final settings = provider.globalSettings;
-    final phone = settings.contactPhone;
-    final email = settings.contactEmail;
-    final address = settings.contactAddress;
+    final isBn = strings.isBn;
+    final phone = settings.getSupportPhone();
+    final email = settings.getSupportEmail();
+    final address = settings.getAddress(isBn);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -63,30 +91,7 @@ class HomeFooterWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RichText(
-                            text: const TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'JOT',
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textDark,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: 'POT',
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.primaryOrange,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildBrandLogo(),
                           const SizedBox(height: 12),
                           Text(
                             settings.getFooterAboutText(strings.isBn, strings),
@@ -237,30 +242,7 @@ class HomeFooterWidget extends StatelessWidget {
                 )
               else ...[
                 // Mobile: Stacked Vertical View
-                RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'JOT',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'POT',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primaryOrange,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildBrandLogo(),
                 const SizedBox(height: 12),
                 Text(
                   settings.getFooterAboutText(strings.isBn, strings),

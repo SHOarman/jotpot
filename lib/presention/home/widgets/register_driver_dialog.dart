@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/data/bangladesh_unions_data.dart';
+import '../../../core/models/location_model.dart';
 import '../../../core/providers/driver_provider.dart';
 import '../../../core/services/firebase_service.dart';
 import '../../../core/services/union_api_service.dart';
@@ -48,10 +50,13 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
   String? _selectedDistrict;
   String? _selectedUpazila;
   String? _selectedUnion; // Union dropdown value
+  String? _selectedWard; // Ward dropdown value
+  bool _useNumericWardMode = true;
   String? _validationError;
 
-  // Union API state
+  // Union & Ward API state
   List<String> _availableUnions = [];
+  List<String> _availableWards = [];
   bool _isLoadingUnions = false;
 
   bool get _isBusOrMiniBus {
@@ -78,6 +83,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     if (_selectedVehicle == null) return false;
     final v = _selectedVehicle!.trim().toLowerCase();
     final en = AppStrings.translateVehicleTypeStatic(_selectedVehicle!, false).toLowerCase().trim();
+    if (v.contains('ট্রাক্টর') || en.contains('tractor') || v.contains('কৃষি')) return false;
     return v.contains('ট্রাক') || en.contains('truck') || _isPickup;
   }
 
@@ -115,12 +121,42 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
 
   bool _isSubmitting = false;
 
+  void _updateAvailableWards(DriverProvider provider) {
+    final directParent = (_selectedUnion != null && _selectedUnion!.trim().isNotEmpty)
+        ? _selectedUnion!.trim()
+        : ((_selectedUpazila != null && _selectedUpazila!.trim().isNotEmpty)
+            ? _selectedUpazila!.trim()
+            : null);
+
+    if (directParent == null || _selectedDistrict == null) {
+      setState(() {
+        _availableWards = [];
+        _selectedWard = null;
+      });
+      return;
+    }
+
+    final wards = provider.getWardsForParent(
+      division: _selectedDivision ?? '',
+      district: _selectedDistrict!,
+      parentName: directParent,
+    );
+    setState(() {
+      _availableWards = wards;
+      if (_selectedWard != null && !_availableWards.contains(_selectedWard)) {
+        _selectedWard = null;
+      }
+    });
+  }
+
   /// Fetch union list from BD API for the given upazila.
-  Future<void> _fetchUnions(String upazila) async {
+  Future<void> _fetchUnions(String upazila, DriverProvider provider) async {
     setState(() {
       _isLoadingUnions = true;
       _selectedUnion = null;
+      _selectedWard = null;
       _availableUnions = [];
+      _availableWards = [];
     });
     try {
       final unions = await UnionApiService.getUnions(
@@ -128,11 +164,50 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
         districtBn: _selectedDistrict ?? '',
         upazilaName: upazila,
       );
+
+      final customUnions = provider.customLocations.where((loc) {
+        final lvl = loc.level;
+        if (lvl != 'union' && lvl != 'pourashava') return false;
+        final div = _selectedDivision ?? '';
+        final dist = _selectedDistrict ?? '';
+
+        if (loc.parentRef != null && loc.parentRef!.startsWith('upazila:')) {
+          final parsed = LocationModel.parseParentRef(loc.parentRef);
+          if (parsed != null) {
+            final pDiv = parsed['division'] ?? '';
+            final pDist = parsed['district'] ?? '';
+            final pUpz = parsed['parent'] ?? '';
+            if (pDiv.isNotEmpty && div.isNotEmpty && !AppStrings.areSameDivision(pDiv, div)) return false;
+            if (pDist.isNotEmpty && dist.isNotEmpty && !AppStrings.areSameDistrict(pDist, dist)) return false;
+            return BangladeshUnionsData.normalizeBn(pUpz).toLowerCase() ==
+                BangladeshUnionsData.normalizeBn(upazila).toLowerCase();
+          }
+        }
+        final locDiv = loc.effectiveDivision;
+        if (locDiv.isNotEmpty && div.isNotEmpty && !AppStrings.areSameDivision(locDiv, div)) return false;
+        final locDist = loc.effectiveDistrict;
+        if (locDist.isNotEmpty && dist.isNotEmpty && !AppStrings.areSameDistrict(locDist, dist)) return false;
+        final locUpz = loc.effectiveUpazila;
+        if (locUpz.isEmpty) return false;
+        return BangladeshUnionsData.normalizeBn(locUpz).toLowerCase() ==
+            BangladeshUnionsData.normalizeBn(upazila).toLowerCase();
+      }).map((loc) => loc.displayName(provider.isBengali)).where((s) => s.isNotEmpty);
+
+      final seen = <String>{};
+      final combined = <String>[];
+      for (final u in [...unions, ...customUnions]) {
+        final norm = BangladeshUnionsData.normalizeBn(u).toLowerCase();
+        if (norm.isNotEmpty && seen.add(norm)) {
+          combined.add(u);
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _availableUnions = unions;
+          _availableUnions = combined;
           _isLoadingUnions = false;
         });
+        _updateAvailableWards(provider);
       }
     } catch (e) {
       if (mounted) {
@@ -541,7 +616,9 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                                 _selectedDistrict = null;
                                                 _selectedUpazila = null;
                                                 _selectedUnion = null;
+                                                _selectedWard = null;
                                                 _availableUnions = [];
+                                                _availableWards = [];
                                               });
                                             },
                                           ),
@@ -567,7 +644,9 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                                 _selectedDistrict = val;
                                                 _selectedUpazila = null;
                                                 _selectedUnion = null;
+                                                _selectedWard = null;
                                                 _availableUnions = [];
+                                                _availableWards = [];
                                               });
                                             },
                                           ),
@@ -598,9 +677,11 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                               setState(() {
                                                 _selectedUpazila = val;
                                                 _selectedUnion = null;
+                                                _selectedWard = null;
                                                 _availableUnions = [];
+                                                _availableWards = [];
                                               });
-                                              if (val != null) _fetchUnions(val);
+                                              if (val != null) _fetchUnions(val, provider);
                                             },
                                           ),
                                         ],
@@ -627,8 +708,13 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                               if (_selectedUnion != null &&
                                                   _selectedUnion!.isNotEmpty)
                                                 InkWell(
-                                                  onTap: () => setState(
-                                                      () => _selectedUnion = null),
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _selectedUnion = null;
+                                                      _selectedWard = null;
+                                                    });
+                                                    _updateAvailableWards(provider);
+                                                  },
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(
                                                         horizontal: 4),
@@ -657,7 +743,11 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                                 !_isLoadingUnions,
                                             isLoading: _isLoadingUnions,
                                             onChanged: (val) {
-                                              setState(() => _selectedUnion = val);
+                                              setState(() {
+                                                _selectedUnion = val;
+                                                _selectedWard = null;
+                                              });
+                                              _updateAvailableWards(provider);
                                             },
                                           ),
                                         ],
@@ -671,12 +761,59 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildSubLabel(strings.filterWard),
-                                    const SizedBox(height: 4),
-                                    _buildTextInput(
-                                      controller: _wardController,
-                                      hint: strings.wardPlaceholder,
+                                    Row(
+                                      children: [
+                                        Expanded(child: _buildSubLabel(strings.filterWard)),
+                                        TextButton(
+                                          onPressed: () => setState(() {
+                                            _useNumericWardMode = !_useNumericWardMode;
+                                            _selectedWard = null;
+                                            _wardController.clear();
+                                          }),
+                                          child: Text(
+                                            _useNumericWardMode
+                                                ? (strings.isBn ? 'লোকেশন তালিকা' : 'Location list')
+                                                : (strings.isBn ? '১–৬০ ওয়ার্ড' : '1–60 Wards'),
+                                            style: const TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    const SizedBox(height: 4),
+                                    if (_useNumericWardMode)
+                                      _buildDropdown(
+                                        hint: strings.isBn ? 'ওয়ার্ড নির্বাচন করুন' : 'Select ward',
+                                        value: _selectedWard,
+                                        items: List.generate(60, (index) => '${index + 1}'),
+                                        itemLabelBuilder: (number) => strings.isBn
+                                            ? '$number ওয়ার্ড'
+                                            : '$number Ward',
+                                        isEnabled: true,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            _selectedWard = val;
+                                            _wardController.text = val ?? '';
+                                          });
+                                        },
+                                      )
+                                    else if (_availableWards.isNotEmpty)
+                                      _buildDropdown(
+                                        hint: strings.wardPlaceholder,
+                                        value: _selectedWard,
+                                        items: _availableWards,
+                                        isEnabled: _availableWards.isNotEmpty,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            _selectedWard = val;
+                                            _wardController.text = val ?? '';
+                                          });
+                                        },
+                                      )
+                                    else
+                                      _buildTextInput(
+                                        controller: _wardController,
+                                        hint: strings.wardPlaceholder,
+                                      ),
                                   ],
                                 ),
                               ],
@@ -821,6 +958,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
     required ValueChanged<String?> onChanged,
     bool isEnabled = true,
     bool isLoading = false,
+    String Function(String)? itemLabelBuilder,
   }) {
     final active = isEnabled && items.isNotEmpty && !isLoading;
 
@@ -864,7 +1002,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                   return DropdownMenuItem<String>(
                     value: item,
                     child: Text(
-                      item,
+                      itemLabelBuilder?.call(item) ?? item,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textDark,

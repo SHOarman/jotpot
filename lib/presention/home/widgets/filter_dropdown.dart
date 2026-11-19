@@ -10,6 +10,7 @@ class FilterDropdown extends StatelessWidget {
   final ValueChanged<String?>? onChanged;
   final bool isEnabled;
   final bool isLoading;
+  final String Function(String)? itemLabelBuilder;
 
   const FilterDropdown({
     super.key,
@@ -20,6 +21,7 @@ class FilterDropdown extends StatelessWidget {
     required this.onChanged,
     this.isEnabled = true,
     this.isLoading = false,
+    this.itemLabelBuilder,
   });
 
   @override
@@ -89,7 +91,7 @@ class FilterDropdown extends StatelessWidget {
                         return DropdownMenuItem<String>(
                           value: item,
                           child: Text(
-                            item,
+                            itemLabelBuilder?.call(item) ?? item,
                             style: const TextStyle(fontSize: 13, color: AppColors.textDark),
                           ),
                         );

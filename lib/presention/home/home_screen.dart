@@ -138,6 +138,51 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
+    if (provider.hasError && provider.drivers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_rounded,
+                size: 48,
+                color: Color(0xFF94A3B8),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                provider.isBengali
+                    ? 'তথ্য লোড করতে সাময়িক সমস্যা হয়েছে।'
+                    : 'Unable to load data at the moment.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => provider.refreshData(),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text(provider.isBengali ? 'পুনরায় চেষ্টা করুন' : 'Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryOrange,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (provider.filteredDrivers.isEmpty) {
       return EmptyDriverWidget(
         onReset: () => provider.resetFilters(),

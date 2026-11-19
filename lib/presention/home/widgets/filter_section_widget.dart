@@ -4,7 +4,6 @@ import '../../../core/providers/driver_provider.dart';
 import '../../../utils/app_strings.dart';
 import '../../../utils/app_theme.dart';
 import 'filter_dropdown.dart';
-import 'filter_input_field.dart';
 
 class FilterSectionWidget extends StatefulWidget {
   const FilterSectionWidget({super.key});
@@ -117,7 +116,7 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                         ),
                         const SizedBox(width: 8),
 
-                        // 5. Union / Municipality (BD API dropdown)
+                        // 5. Union / Municipality (BD API dropdown & child locations)
                         Expanded(
                           child: FilterDropdown(
                             label: strings.filterUnion,
@@ -132,14 +131,15 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-
-                        // 6. Ward (Typeable text field)
+                        // 6. Ward number selector
                         Expanded(
-                          child: FilterInputField(
+                          child: FilterDropdown(
                             label: strings.filterWard,
                             hint: strings.filterWardHint,
                             value: provider.selectedWard,
-                            onChanged: (val) => provider.setWard(val),
+                            items: wardItems,
+                            itemLabelBuilder: wardOptionLabel,
+                            onChanged: provider.setWard,
                           ),
                         ),
                       ],
@@ -205,7 +205,7 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Row 3: Union & Ward (Typeable Text Input Fields)
+                    // Row 3: Union & Child Location
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -224,11 +224,13 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: FilterInputField(
+                          child: FilterDropdown(
                             label: strings.filterWard,
                             hint: strings.filterWardHint,
                             value: provider.selectedWard,
-                            onChanged: (val) => provider.setWard(val),
+                            items: wardItems,
+                            itemLabelBuilder: wardOptionLabel,
+                            onChanged: provider.setWard,
                           ),
                         ),
                       ],

@@ -1177,13 +1177,8 @@ class AppStrings {
           return entry.value;
         }
       }
-      // If still not matched, check if input is already English
-      final hasBengali = RegExp(r'[\u0980-\u09FF]').hasMatch(clean);
-      if (!hasBengali) {
-        return clean;
-      }
-      // Guaranteed transliteration fallback so NO Bengali script is shown in English mode
-      return transliterateBnToEn(clean);
+      // Safe fallback: if enName is absent in dictionary, fallback to name/bnName as-is without guessing
+      return clean;
     }
   }
 
@@ -1210,10 +1205,7 @@ class AppStrings {
       };
       bnDigits.forEach((k, v) => u = u.replaceAll(k, v));
 
-      final hasBengali = RegExp(r'[\u0980-\u09FF]').hasMatch(u);
-      if (hasBengali) {
-        return transliterateBnToEn(u);
-      }
+      // Contract: fallback to name/bnName as-is without guessing
       return u;
     } else {
       // English to Bengali
@@ -1313,7 +1305,10 @@ class AppStrings {
     if (clean.contains('pickup') || clean.contains('pick up') || clean.contains('পিকআপ') || clean.contains('পিক আপ')) {
       return 'pickup';
     }
-    if (clean.contains('truck') || clean.contains('ট্রাক')) {
+    if (clean.contains('tractor') || clean.contains('votvoti') || clean.contains('ট্রাক্টর') || clean.contains('ভটভটি')) {
+      return 'tractor';
+    }
+    if (!clean.contains('tractor') && !clean.contains('ট্রাক্টর') && (clean.contains('truck') || clean.contains('ট্রাক'))) {
       return 'truck';
     }
     if (clean.contains('cng') || clean.contains('সিএনজি') || clean.contains('সি এন জি')) {

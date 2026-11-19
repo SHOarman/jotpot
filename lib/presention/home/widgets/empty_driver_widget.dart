@@ -95,15 +95,34 @@ class EmptyDriverWidget extends StatelessWidget {
         child: Center(
           child: Padding(
             padding:
-                const EdgeInsets.symmetric(vertical: 60.0, horizontal: 24.0),
-            child: Text(
-              strings.noDriversFound,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.normal,
-              ),
+                const EdgeInsets.symmetric(vertical: 40.0, horizontal: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  strings.noDriversFound,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+                if (onReset != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: onReset,
+                    icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
+                    label: Text(
+                      strings.isBn ? 'ফিল্টার রিসেট করুন' : 'Reset filters',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFE96B1F),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),

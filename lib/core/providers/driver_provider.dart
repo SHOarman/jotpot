@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
 import '../models/global_settings_model.dart';
+import '../models/location_model.dart';
 import '../models/vehicle_type_model.dart';
 import '../services/firebase_service.dart';
 import '../services/geo_service.dart';
@@ -35,6 +36,10 @@ class DriverProvider extends ChangeNotifier {
   List<String> _unions = [];
   bool _isLoadingUnions = false;
 
+  // Locations collection state (live Firestore data for custom upazilas, unions, wards)
+  List<LocationModel> _customLocations = [];
+  List<LocationModel> get customLocations => _customLocations;
+
   // Modes & Language
   bool _isBengali = true;
   bool _isUnityMode = false; // Home Mode vs Unity Mode
@@ -46,8 +51,17 @@ class DriverProvider extends ChangeNotifier {
 
   StreamSubscription? _driverSubscription;
   StreamSubscription? _settingsSubscription;
+  StreamSubscription? _publicContentSubscription;
   StreamSubscription? _vehicleTypesSubscription;
+  StreamSubscription? _locationsSubscription;
   StreamSubscription<List<String>>? _unionSubscription;
+
+  bool _isRefreshing = false;
+  bool get isRefreshing => _isRefreshing;
+  bool _hasError = false;
+  bool get hasError => _hasError;
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
 
   DriverProvider() {
     loadDrivers();
@@ -67,6 +81,8 @@ class DriverProvider extends ChangeNotifier {
     }
 
     _isLoading = true;
+    _hasError = false;
+    _errorMessage = null;
     notifyListeners();
 
     // 1. Listen to Real-time Firestore Active Drivers
@@ -74,24 +90,30 @@ class DriverProvider extends ChangeNotifier {
       (firestoreDrivers) {
         _drivers = firestoreDrivers;
         _isLoading = false;
+        _hasError = false;
+        _errorMessage = null;
         notifyListeners();
       },
       onError: (err) {
-        debugPrint('Firestore drivers sync error: $err');
+        debugPrint('Firestore drivers sync error: ${err.runtimeType}');
         _isLoading = false;
+        _hasError = true;
+        _errorMessage = _isBengali
+            ? 'তথ্য লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+            : 'Failed to load data. Please try again.';
         notifyListeners();
       },
     );
 
-    // 2. Listen to Real-time Settings (Payment instructions, automated payments, discounts, live banner)
+    // 2. Listen to Real-time Settings (settings/global)
     _settingsSubscription = FirebaseService.listenGlobalSettings().listen(
       (doc) {
         if (doc.exists) {
           final data = doc.data();
           if (data != null) {
             _globalSettings = GlobalSettingsModel.fromMap(data);
-            final liveText = data['liveBannerText']?.toString();
-            final showBanner = data['showLiveBanner'] == true;
+            final liveText = data['noticeBn']?.toString() ?? data['liveBannerText']?.toString();
+            final showBanner = data['showLiveBanner'] != false;
             if (showBanner && liveText != null && liveText.isNotEmpty) {
               _noticeText = liveText;
             }
@@ -100,11 +122,31 @@ class DriverProvider extends ChangeNotifier {
         }
       },
       onError: (err) {
-        debugPrint('Firestore settings sync error: $err');
+        debugPrint('Firestore settings sync error: ${err.runtimeType}');
       },
     );
 
-    // 3. Listen to Real-time Vehicle Types (Monthly fee, discounts)
+    // 3. Listen to Real-time Public Content (settings/publicContent)
+    _publicContentSubscription = FirebaseService.listenPublicContent().listen(
+      (doc) {
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null) {
+            _globalSettings = _globalSettings.merge(data);
+            final liveText = data['noticeBn']?.toString() ?? data['liveBannerText']?.toString();
+            if (liveText != null && liveText.isNotEmpty) {
+              _noticeText = liveText;
+            }
+            notifyListeners();
+          }
+        }
+      },
+      onError: (err) {
+        debugPrint('Firestore public content sync error: ${err.runtimeType}');
+      },
+    );
+
+    // 4. Listen to Real-time Vehicle Types (priority, monthly fee, discounts)
     _vehicleTypesSubscription = FirebaseService.streamVehicleTypes().listen(
       (list) {
         _vehicleTypeModels =
@@ -112,16 +154,100 @@ class DriverProvider extends ChangeNotifier {
         notifyListeners();
       },
       onError: (err) {
-        debugPrint('Firestore vehicleTypes sync error: $err');
+        debugPrint('Firestore vehicleTypes sync error: ${err.runtimeType}');
       },
     );
+
+    // 5. Listen to Real-time Locations (custom upazila, pourashava, union, ward)
+    _locationsSubscription = FirebaseService.streamCustomLocations().listen(
+      (locations) {
+        _customLocations = locations;
+        notifyListeners();
+      },
+      onError: (err) {
+        debugPrint('Firestore custom locations sync error: ${err.runtimeType}');
+      },
+    );
+  }
+
+  /// Refreshes Firestore-backed data without resetting user form input or filter selections
+  Future<void> refreshData() async {
+    _isRefreshing = true;
+    _hasError = false;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // A. Re-fetch combined global and publicContent settings
+      final settingsData = await FirebaseService.fetchCombinedSettings();
+      if (settingsData.isNotEmpty) {
+        _globalSettings = GlobalSettingsModel.fromMap(settingsData);
+        final liveText = settingsData['noticeBn']?.toString() ??
+            settingsData['liveBannerText']?.toString();
+        final showBanner = settingsData['showLiveBanner'] != false;
+        if (showBanner && liveText != null && liveText.isNotEmpty) {
+          _noticeText = liveText;
+        }
+      }
+
+      // B. Re-fetch vehicle types with priority
+      final vtList = await FirebaseService.fetchVehicleTypesOnce();
+      if (vtList.isNotEmpty) {
+        _vehicleTypeModels = vtList.map((m) => VehicleTypeModel.fromMap(m)).toList();
+      }
+
+      // C. Re-fetch active drivers
+      final activeDrivers = await FirebaseService.fetchActiveDriversOnce();
+      if (activeDrivers.isNotEmpty) {
+        _drivers = activeDrivers;
+      }
+
+      // D. Sync remote geo hierarchy
+      await GeoService.syncWithRemoteServer();
+
+      // E. If an upazila is selected, refresh unions from cloud
+      if (_selectedUpazila != null) {
+        final bnDivision = _selectedDivision != null
+            ? AppStrings.toBengaliDivision(_selectedDivision!)
+            : '';
+        final bnDistrict = _selectedDistrict != null
+            ? AppStrings.toBengaliDistrict(_selectedDistrict!)
+            : '';
+        final unions = await UnionApiService.getUnions(
+          divisionBn: bnDivision,
+          districtBn: bnDistrict,
+          upazilaName: _selectedUpazila!,
+          isBengali: _isBengali,
+        );
+        if (unions.isNotEmpty) {
+          _unions = unions;
+        }
+      }
+
+      // F. Re-fetch custom locations from Firestore
+      final freshLocations = await FirebaseService.fetchCustomLocationsOnce();
+      if (freshLocations.isNotEmpty) {
+        _customLocations = freshLocations;
+      }
+    } catch (e) {
+      debugPrint('DriverProvider refreshData error: ${e.runtimeType}');
+      _hasError = true;
+      _errorMessage = _isBengali
+          ? 'তথ্য লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+          : 'Failed to load data. Please try again.';
+    } finally {
+      _isRefreshing = false;
+      notifyListeners();
+    }
   }
 
   @override
   void dispose() {
     _driverSubscription?.cancel();
     _settingsSubscription?.cancel();
+    _publicContentSubscription?.cancel();
     _vehicleTypesSubscription?.cancel();
+    _locationsSubscription?.cancel();
     _unionSubscription?.cancel();
     super.dispose();
   }
@@ -147,7 +273,27 @@ class DriverProvider extends ChangeNotifier {
   bool get isSelectedTruckOrPickup {
     if (_selectedVehicleType == null) return false;
     final v = _selectedVehicleType!.trim().toLowerCase();
-    return v == 'truck' || v == 'pickup' || v.contains('ট্রাক') || v.contains('পিকআপ') || v.contains('কাভার্ড');
+    if (v.contains('ট্রাক্টর') ||
+        v.contains('tractor') ||
+        v.contains('কৃষি') ||
+        v.contains('agriculture') ||
+        v.contains('ভটভটি') ||
+        v.contains('হারভেস্টার') ||
+        v.contains('পাওয়ার টিলার') ||
+        v.contains('টিলার') ||
+        v.contains('এক্সকাভেটর') ||
+        v.contains('ভেকু') ||
+        v.contains('ট্রলি')) {
+      return false;
+    }
+    return v == 'truck' ||
+        v == 'pickup' ||
+        v == 'ট্রাক' ||
+        v == 'পিকআপ' ||
+        (v.contains('ট্রাক') && !v.contains('ট্রাক্টর')) ||
+        v.contains('পিকআপ') ||
+        v.contains('কাভার্ড') ||
+        v.contains('covered');
   }
 
   bool get isSelectedHelicopter {
@@ -161,32 +307,68 @@ class DriverProvider extends ChangeNotifier {
     final v = _selectedVehicleType!.trim().toLowerCase();
     return v == 'motorcycle' || v == 'bike' || v == 'car' || v == 'private car' || v.contains('মোটরসাইকেল') || v.contains('বাইক') || v.contains('কার') || v.contains('প্রাইভেট');
   }
-  List<String> get unions => _isBengali
-      ? _unions
-      : _unions.map((u) => AppStrings.translateUnionStatic(u, false)).toList();
+  List<String> get unions {
+    final baseList = _isBengali
+        ? _unions
+        : _unions.map((u) => AppStrings.translateUnionStatic(u, false)).toList();
+
+    if (_selectedUpazila == null || _selectedDistrict == null) return baseList;
+
+    final div = _selectedDivision ?? '';
+    final dist = _selectedDistrict!;
+    final upz = _selectedUpazila!;
+
+    // Find custom unions, pourashavas, and child locations (wards/areas)
+    // under this selected upazila/pourashava from locations collection
+    final customUnions = _customLocations.where((loc) {
+      final lvl = loc.level;
+      if (lvl == 'division' || lvl == 'district' || lvl == 'upazila') return false;
+
+      // 1. Check parentRef if present
+      if (loc.parentRef != null && loc.parentRef!.startsWith('upazila:')) {
+        final parsed = LocationModel.parseParentRef(loc.parentRef);
+        if (parsed != null) {
+          final pDiv = parsed['division'] ?? '';
+          final pDist = parsed['district'] ?? '';
+          final pUpz = parsed['parent'] ?? '';
+          if (pDiv.isNotEmpty && div.isNotEmpty && !AppStrings.areSameDivision(pDiv, div)) return false;
+          if (pDist.isNotEmpty && dist.isNotEmpty && !AppStrings.areSameDistrict(pDist, dist)) return false;
+          return _isMatchingLocationName(pUpz, upz);
+        }
+      }
+
+      // 2. Legacy / field matching
+      final locDiv = loc.effectiveDivision;
+      if (locDiv.isNotEmpty && div.isNotEmpty && !AppStrings.areSameDivision(locDiv, div)) {
+        return false;
+      }
+      final locDist = loc.effectiveDistrict;
+      if (locDist.isNotEmpty && dist.isNotEmpty && !AppStrings.areSameDistrict(locDist, dist)) {
+        return false;
+      }
+      final locUpz = loc.effectiveUpazila;
+      if (locUpz.isEmpty) return false;
+      return _isMatchingLocationName(locUpz, upz);
+    }).map((loc) => loc.displayName(_isBengali)).where((name) => name.trim().isNotEmpty);
+
+    final seen = <String>{};
+    final combined = <String>[];
+    for (final u in [...baseList, ...customUnions]) {
+      final norm = BangladeshUnionsData.normalizeBn(u).toLowerCase();
+      if (norm.isNotEmpty && seen.add(norm)) {
+        combined.add(u);
+      }
+    }
+    return combined;
+  }
   bool get isLoadingUnions => _isLoadingUnions;
   bool get isUnityMode => _isUnityMode;
   String get noticeText => getNoticeText(_isBengali);
 
   String getNoticeText(bool isBn) {
-    if (isBn) {
-      if (_globalSettings.liveBannerText.isNotEmpty) {
-        return _globalSettings.liveBannerText;
-      }
-      if (_noticeText.isNotEmpty) return _noticeText;
-      final phone = _globalSettings.contactPhone.isNotEmpty
-          ? _globalSettings.contactPhone
-          : '01677234297';
-      return 'যেকোনো প্রয়োজন বা সহায়তার জন্য ঝটপট-এর সাথে সরাসরি যোগাযোগ করুন। কল করুন: $phone';
-    } else {
-      if (_globalSettings.liveBannerTextEn.isNotEmpty) {
-        return _globalSettings.liveBannerTextEn;
-      }
-      final phone = _globalSettings.contactPhone.isNotEmpty
-          ? _globalSettings.contactPhone
-          : '01677234297';
-      return 'For any inquiry or assistance, please contact Jotpot directly. Call: $phone';
-    }
+    final text = _globalSettings.getNoticeText(isBn);
+    if (text.isNotEmpty) return text;
+    return _noticeText;
   }
   GlobalSettingsModel get globalSettings => _globalSettings;
   List<VehicleTypeModel> get vehicleTypeModels => _vehicleTypeModels;
@@ -196,19 +378,24 @@ class DriverProvider extends ChangeNotifier {
   static Map<String, Map<String, List<String>>> get geoHierarchy =>
       GeoService.getHierarchy();
 
-  // Preset Filter Options: Dynamic translation based on current language
+  // Preset Filter Options: Dynamic translation based on current language and sorted by priority
   List<String> get vehicleTypes {
     final activeModels = _vehicleTypeModels.where((v) => v.isVisible && v.isActive).toList();
     final modelsToUse = activeModels.isNotEmpty ? activeModels : _vehicleTypeModels;
     if (modelsToUse.isNotEmpty) {
-      return modelsToUse.map((v) {
-        if (_isBengali) {
-          if (v.bnName.trim().isNotEmpty) return v.bnName.trim();
-          return AppStrings.translateVehicleTypeStatic(v.name, true);
-        } else {
-          return AppStrings.translateVehicleTypeStatic(v.name, false);
-        }
-      }).toSet().toList();
+      final sortedList = List<VehicleTypeModel>.from(modelsToUse);
+      sortedList.sort((a, b) {
+        final aPriority = a.priority ?? 999999;
+        final bPriority = b.priority ?? 999999;
+        final priorityCmp = aPriority.compareTo(bPriority);
+        if (priorityCmp != 0) return priorityCmp;
+        final aName = a.name.toLowerCase();
+        final bName = b.name.toLowerCase();
+        final nameCmp = aName.compareTo(bName);
+        if (nameCmp != 0) return nameCmp;
+        return a.id.compareTo(b.id);
+      });
+      return sortedList.map((v) => v.getDisplayName(_isBengali)).toSet().toList();
     }
     final defaultList = [
       'Bus',
@@ -289,40 +476,172 @@ class DriverProvider extends ChangeNotifier {
       }
     }
     final rawUpazilas = upazilaList ?? [];
-    if (_isBengali) {
-      return rawUpazilas
-          .map((u) => AppStrings.translateUpazilaStatic(u, true))
-          .toList();
-    } else {
-      return rawUpazilas
-          .map((u) => AppStrings.translateUpazilaStatic(u, false))
-          .toList();
+    final baseUpazilas = _isBengali
+        ? rawUpazilas.map((u) => AppStrings.translateUpazilaStatic(u, true)).toList()
+        : rawUpazilas.map((u) => AppStrings.translateUpazilaStatic(u, false)).toList();
+
+    // Include custom upazilas / pourashavas from locations collection matching this district
+    final customUpz = _customLocations
+        .where((loc) {
+          final lvl = loc.level;
+          if (lvl != 'upazila' && lvl != 'pourashava') return false;
+          final locDist = loc.effectiveDistrict;
+          if (locDist.isNotEmpty && !AppStrings.areSameDistrict(locDist, district)) {
+            return false;
+          }
+          final locDiv = loc.effectiveDivision;
+          if (locDiv.isNotEmpty && division.isNotEmpty && !AppStrings.areSameDivision(locDiv, division)) {
+            return false;
+          }
+          return true;
+        })
+        .map((loc) => loc.displayName(_isBengali))
+        .where((name) => name.trim().isNotEmpty);
+
+    final seen = <String>{};
+    final result = <String>[];
+    for (final u in [...baseUpazilas, ...customUpz]) {
+      final norm = BangladeshUnionsData.normalizeBn(u).toLowerCase();
+      if (norm.isNotEmpty && seen.add(norm)) {
+        result.add(u);
+      }
     }
+    return result;
   }
 
-  List<String> get wards => _isBengali
-      ? const [
-          'ওয়ার্ড ১',
-          'ওয়ার্ড ২',
-          'ওয়ার্ড ৩',
-          'ওয়ার্ড ৪',
-          'ওয়ার্ড ৫',
-          'ওয়ার্ড ৬',
-          'ওয়ার্ড ৭',
-          'ওয়ার্ড ৮',
-          'ওয়ার্ড ৯',
-        ]
-      : const [
-          'Ward 1',
-          'Ward 2',
-          'Ward 3',
-          'Ward 4',
-          'Ward 5',
-          'Ward 6',
-          'Ward 7',
-          'Ward 8',
-          'Ward 9',
-        ];
+  // Cascading wards: dynamically read child locations from locations collection for the selected parent.
+  // Never returns hardcoded fake options; returns empty list if no child locations exist.
+  List<String> get wards {
+    if (_selectedDistrict == null) return [];
+
+    final directParent = (_selectedUnion != null && _selectedUnion!.trim().isNotEmpty)
+        ? _selectedUnion!.trim()
+        : ((_selectedUpazila != null && _selectedUpazila!.trim().isNotEmpty)
+            ? _selectedUpazila!.trim()
+            : null);
+
+    if (directParent == null) return [];
+
+    return getWardsForParent(
+      division: _selectedDivision ?? '',
+      district: _selectedDistrict!,
+      parentName: directParent,
+    );
+  }
+
+  /// Get direct child wards/locations for a specific parent (union or pourashava/upazila)
+  List<String> getWardsForParent({
+    required String division,
+    required String district,
+    required String parentName,
+  }) {
+    if (district.isEmpty || parentName.isEmpty) return [];
+
+    final matchingWards = _customLocations.where((loc) {
+      final lvl = loc.level;
+      if (lvl != 'ward' && lvl != 'gram' && lvl != 'village' && lvl != 'area') return false;
+
+      // 1. Check parentRef if present
+      if (loc.parentRef != null && loc.parentRef!.startsWith('upazila:')) {
+        final parsed = LocationModel.parseParentRef(loc.parentRef);
+        if (parsed != null) {
+          final pDiv = parsed['division'] ?? '';
+          final pDist = parsed['district'] ?? '';
+          final pName = parsed['parent'] ?? '';
+          if (pDiv.isNotEmpty && division.isNotEmpty && !AppStrings.areSameDivision(pDiv, division)) return false;
+          if (pDist.isNotEmpty && !AppStrings.areSameDistrict(pDist, district)) return false;
+          return _isMatchingLocationName(pName, parentName);
+        }
+      }
+
+      // 2. Legacy / field matching
+      final locDiv = loc.effectiveDivision;
+      if (locDiv.isNotEmpty && division.isNotEmpty && !AppStrings.areSameDivision(locDiv, division)) {
+        return false;
+      }
+      final locDist = loc.effectiveDistrict;
+      if (locDist.isNotEmpty && !AppStrings.areSameDistrict(locDist, district)) {
+        return false;
+      }
+
+      final parentCandidates = [
+        loc.parentUpazila,
+        loc.union,
+        loc.upazila,
+        loc.parentId,
+      ].whereType<String>().where((s) => s.trim().isNotEmpty).toList();
+
+      if (parentCandidates.isEmpty) return false;
+      return parentCandidates.any((p) => _isMatchingLocationName(p, parentName));
+    }).map((loc) => loc.displayName(_isBengali)).where((name) => name.trim().isNotEmpty);
+
+    final seen = <String>{};
+    final result = <String>[];
+    for (final w in matchingWards) {
+      final norm = BangladeshUnionsData.normalizeBn(w).toLowerCase();
+      if (norm.isNotEmpty && seen.add(norm)) {
+        result.add(w);
+      }
+    }
+    return result;
+  }
+
+  static bool _isMatchingLocationName(String a, String b) {
+    if (a.trim().toLowerCase() == b.trim().toLowerCase()) return true;
+    final normA = BangladeshUnionsData.normalizeBn(a).toLowerCase();
+    final normB = BangladeshUnionsData.normalizeBn(b).toLowerCase();
+    if (normA == normB) return true;
+    if (AppStrings.areSameUpazila(a, b)) return true;
+
+    // Suffix stripping (e.g. 'পৌরসভা', 'সদর', 'pourashava', 'sadar', etc.)
+    final cleanA = _stripLocationSuffix(normA);
+    final cleanB = _stripLocationSuffix(normB);
+    if (cleanA.isNotEmpty && cleanA == cleanB) return true;
+    if (AppStrings.areSameUpazila(cleanA, cleanB)) return true;
+
+    // Transliteration & English consonant skeleton matching (e.g. 'madripur' vs 'madirpur' vs 'madaripur' vs 'মাদারীপুর')
+    if (_matchPhoneticOrSkeleton(cleanA, cleanB)) return true;
+
+    return false;
+  }
+
+  static String _stripLocationSuffix(String s) {
+    return s
+        .replaceAll(
+            RegExp(r'\s*\(?(পৌরসভা|pourashava|municipality|সদর|sadar|মডেল|model|থানা|thana)\)?',
+                caseSensitive: false),
+            '')
+        .trim();
+  }
+
+  static bool _matchPhoneticOrSkeleton(String a, String b) {
+    String enA = AppStrings.translateUpazilaStatic(a, false).toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    String enB = AppStrings.translateUpazilaStatic(b, false).toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    if (enA.isEmpty) enA = a.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    if (enB.isEmpty) enB = b.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    if (enA.isNotEmpty && enA == enB) return true;
+
+    // Consonant skeleton (strip vowels)
+    final skelA = enA.replaceAll(RegExp(r'[aeiouy]'), '');
+    final skelB = enB.replaceAll(RegExp(r'[aeiouy]'), '');
+    if (skelA.length >= 3 && skelA == skelB) return true;
+
+    return false;
+  }
+
+  static String _westernizeDigits(String value) => value.replaceAllMapped(
+        RegExp(r'[০-৯]'),
+        (match) => '${match.group(0)!.codeUnitAt(0) - '০'.codeUnitAt(0)}',
+      );
+
+  static bool _matchesWardNumber(String wardValue, String selectedNumber) {
+    final normalizedWard = _westernizeDigits(wardValue.trim());
+    final wardNumbers = RegExp(r'\d+')
+        .allMatches(normalizedWard)
+        .map((match) => match.group(0))
+        .whereType<String>();
+    return wardNumbers.contains(selectedNumber);
+  }
 
   /// Filtered drivers getter
   List<DriverModel> get filteredDrivers {
@@ -369,8 +688,10 @@ class DriverProvider extends ChangeNotifier {
         for (final m in _vehicleTypeModels) {
           final mName = m.name.trim().toLowerCase();
           final mBn = m.bnName.trim().toLowerCase();
-          if ((sel == mName || (mBn.isNotEmpty && sel == mBn)) &&
-              (dType == mName || (mBn.isNotEmpty && dType == mBn))) {
+          final mEn = m.enName.trim().toLowerCase();
+          final isSel = sel == mName || (mBn.isNotEmpty && sel == mBn) || (mEn.isNotEmpty && sel == mEn);
+          final isDType = dType == mName || (mBn.isNotEmpty && dType == mBn) || (mEn.isNotEmpty && dType == mEn);
+          if (isSel && isDType) {
             matchesVehicle = true;
             break;
           }
@@ -431,10 +752,9 @@ class DriverProvider extends ChangeNotifier {
         }
       }
 
-      final matchesWard = _selectedWard == null ||
-          _selectedWard!.trim().isEmpty ||
-          driver.ward.toLowerCase().contains(_selectedWard!.trim().toLowerCase()) ||
-          driver.address.toLowerCase().contains(_selectedWard!.trim().toLowerCase());
+      final selectedWard = _selectedWard?.trim() ?? '';
+      final matchesWard = selectedWard.isEmpty ||
+          _matchesWardNumber(driver.ward, selectedWard);
 
       // Feature specific filters
       if (_isCoveredFilter && !driver.isCovered) {
@@ -583,6 +903,7 @@ class DriverProvider extends ChangeNotifier {
     _selectedDistrict = null; // Reset child district
     _selectedUpazila = null;  // Reset child upazila
     _selectedUnion = null;    // Reset union
+    _selectedWard = null;     // Reset child ward
     _unions = [];             // Clear union list
     _isLoadingUnions = false;
     notifyListeners();
@@ -594,6 +915,7 @@ class DriverProvider extends ChangeNotifier {
     _searchCycleCounter++;
     _selectedUpazila = null;  // Reset child upazila
     _selectedUnion = null;    // Reset union
+    _selectedWard = null;     // Reset child ward
     _unions = [];             // Clear union list
     _isLoadingUnions = false;
     notifyListeners();
@@ -604,6 +926,7 @@ class DriverProvider extends ChangeNotifier {
     _selectedUpazila = val;
     _searchCycleCounter++;
     _selectedUnion = null; // Reset union when upazila changes
+    _selectedWard = null;  // Reset ward when upazila changes
     _unions = [];
     // Subscribe to Firestore union changes for the selected upazila.
     if (val != null) {
@@ -622,22 +945,23 @@ class DriverProvider extends ChangeNotifier {
     final bnDistrict = _selectedDistrict != null
         ? AppStrings.toBengaliDistrict(_selectedDistrict!)
         : '';
-    final bnUpazila = AppStrings.translateUpazilaStatic(upazila, true);
     _unionSubscription = UnionApiService.watchUnions(
         divisionBn: bnDivision,
         districtBn: bnDistrict,
-        upazilaName: bnUpazila,
+        upazilaName: upazila,
+        isBengali: _isBengali,
       ).listen((unions) {
         if (_selectedUpazila != upazila) return;
         _unions = unions;
         _isLoadingUnions = false;
         notifyListeners();
       }, onError: (Object error) async {
-        debugPrint('DriverProvider union listener error: $error');
+        debugPrint('DriverProvider union listener error: ${error.runtimeType}');
         final fallback = await UnionApiService.getUnions(
           divisionBn: bnDivision,
           districtBn: bnDistrict,
-          upazilaName: bnUpazila,
+          upazilaName: upazila,
+          isBengali: _isBengali,
         );
         if (_selectedUpazila != upazila) return;
         _unions = fallback;
@@ -648,6 +972,7 @@ class DriverProvider extends ChangeNotifier {
 
   void setUnion(String? val) {
     _selectedUnion = val;
+    _selectedWard = null; // Reset ward when union changes
     _searchCycleCounter++;
     notifyListeners();
   }
@@ -659,6 +984,7 @@ class DriverProvider extends ChangeNotifier {
   }
 
   void resetFilters() {
+    _unionSubscription?.cancel();
     _searchQuery = '';
     _selectedVehicleType = null;
     _selectedDivision = null;
@@ -666,11 +992,19 @@ class DriverProvider extends ChangeNotifier {
     _selectedUpazila = null;
     _selectedUnion = null;
     _selectedWard = null;
+    _unions = [];
+    _isLoadingUnions = false;
     _isCoveredFilter = false;
     _vehicleLengthFilter = '';
     _isAirAmbulanceFilter = false;
     _isSelfDrivingFilter = false;
+    _searchCycleCounter++;
     notifyListeners();
+  }
+
+  Future<void> resetToHomeAndRefresh() async {
+    resetFilters();
+    await refreshData();
   }
 
   void toggleLanguage() {

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 import '../models/driver_model.dart';
+import '../models/location_model.dart';
 
 class FirebaseService {
   static FirebaseFirestore? _cachedDb;
@@ -346,5 +347,83 @@ class FirebaseService {
       return const Stream.empty();
     }
     return _db.collection('settings').doc('global').snapshots();
+  }
+
+  /// Listen to public content settings (brandName, notice, support info)
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> listenPublicContent() {
+    if (Firebase.apps.isEmpty) {
+      return const Stream.empty();
+    }
+    return _db.collection('settings').doc('publicContent').snapshots();
+  }
+
+  /// Fetch settings once combining settings/global and settings/publicContent
+  static Future<Map<String, dynamic>> fetchCombinedSettings() async {
+    final combined = <String, dynamic>{};
+    if (Firebase.apps.isEmpty) return combined;
+    try {
+      final globalDoc = await _db.collection('settings').doc('global').get();
+      if (globalDoc.exists && globalDoc.data() != null) {
+        combined.addAll(globalDoc.data()!);
+      }
+    } catch (_) {
+      // Non-blocking fallback
+    }
+    try {
+      final pubDoc = await _db.collection('settings').doc('publicContent').get();
+      if (pubDoc.exists && pubDoc.data() != null) {
+        combined.addAll(pubDoc.data()!);
+      }
+    } catch (_) {
+      // Non-blocking fallback
+    }
+    return combined;
+  }
+
+  /// One-time fetch of active drivers
+  static Future<List<DriverModel>> fetchActiveDriversOnce() async {
+    if (Firebase.apps.isEmpty) return [];
+    try {
+      final snap = await db.collection('drivers').where('isActive', isEqualTo: true).limit(50).get();
+      return snap.docs
+          .map((doc) => DriverModel.fromMap(doc.data(), id: doc.id))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// One-time fetch of vehicle types
+  static Future<List<Map<String, dynamic>>> fetchVehicleTypesOnce() async {
+    if (Firebase.apps.isEmpty) return [];
+    try {
+      final snap = await _db.collection('vehicleTypes').get();
+      return snap.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Real-time stream of locations from 'locations' collection
+  static Stream<List<LocationModel>> streamCustomLocations() {
+    if (Firebase.apps.isEmpty) return Stream.value([]);
+    return db.collection('locations').snapshots().map((snap) {
+      return snap.docs.map((doc) {
+        return LocationModel.fromFirestore(doc.data(), doc.id);
+      }).toList();
+    });
+  }
+
+  /// One-time fetch of locations from 'locations' collection
+  static Future<List<LocationModel>> fetchCustomLocationsOnce() async {
+    if (Firebase.apps.isEmpty) return [];
+    try {
+      final snap = await db.collection('locations').get();
+      return snap.docs.map((doc) {
+        return LocationModel.fromFirestore(doc.data(), doc.id);
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }
