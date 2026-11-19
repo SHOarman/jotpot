@@ -529,6 +529,10 @@ class DriverProvider extends ChangeNotifier {
     );
   }
 
+  /// Standard Ward selector options for the Home filter.
+  List<String> get driverWardOptions =>
+      List<String>.generate(60, (index) => '${index + 1}');
+
   /// Get direct child wards/locations for a specific parent (union or pourashava/upazila)
   List<String> getWardsForParent({
     required String division,

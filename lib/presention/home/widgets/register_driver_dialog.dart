@@ -785,9 +785,7 @@ class _RegisterDriverDialogState extends State<RegisterDriverDialog> {
                                         hint: strings.isBn ? 'ওয়ার্ড নির্বাচন করুন' : 'Select ward',
                                         value: _selectedWard,
                                         items: List.generate(60, (index) => '${index + 1}'),
-                                        itemLabelBuilder: (number) => strings.isBn
-                                            ? '$number ওয়ার্ড'
-                                            : '$number Ward',
+                                        itemLabelBuilder: strings.wardNumberLabel,
                                         isEnabled: true,
                                         onChanged: (val) {
                                           setState(() {

@@ -116,7 +116,7 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                         ),
                         const SizedBox(width: 8),
 
-                        // 5. Union / Municipality (BD API dropdown & child locations)
+                        // 5. Union / Municipality (includes child locations)
                         Expanded(
                           child: FilterDropdown(
                             label: strings.filterUnion,
@@ -131,14 +131,13 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 6. Ward number selector
                         Expanded(
                           child: FilterDropdown(
                             label: strings.filterWard,
                             hint: strings.filterWardHint,
                             value: provider.selectedWard,
-                            items: wardItems,
-                            itemLabelBuilder: wardOptionLabel,
+                            items: provider.driverWardOptions,
+                            itemLabelBuilder: strings.wardNumberLabel,
                             onChanged: provider.setWard,
                           ),
                         ),
@@ -205,7 +204,7 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Row 3: Union & Child Location
+                    // Row 3: Union & Ward
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -228,8 +227,8 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                             label: strings.filterWard,
                             hint: strings.filterWardHint,
                             value: provider.selectedWard,
-                            items: wardItems,
-                            itemLabelBuilder: wardOptionLabel,
+                            items: provider.driverWardOptions,
+                            itemLabelBuilder: strings.wardNumberLabel,
                             onChanged: provider.setWard,
                           ),
                         ),

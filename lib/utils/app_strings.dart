@@ -60,6 +60,9 @@ class AppStrings {
       AppStrings.translateUnionStatic(raw, isBn);
   String translateWard(String raw) =>
       AppStrings.translateWardStatic(raw, isBn);
+  String wardNumberLabel(String ward) => isBn
+      ? '${AppStrings.translateWardStatic(ward, true)} নং ওয়ার্ড'
+      : 'Ward $ward';
   String vehicleCategoryName(String raw) =>
       AppStrings.translateVehicleTypeStatic(raw, isBn);
 
