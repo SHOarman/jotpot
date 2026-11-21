@@ -98,6 +98,27 @@ class HomeScreen extends StatelessWidget {
                               // 6. Driver Directory Results List (Grid on Web, ListView on Mobile)
                               _buildDriverList(provider, isWeb, constraints),
 
+                              if (provider.hasMoreDrivers) ...[
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: OutlinedButton.icon(
+                                    onPressed: provider.isLoadingMoreDrivers
+                                        ? null
+                                        : provider.loadMoreDrivers,
+                                    icon: provider.isLoadingMoreDrivers
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          )
+                                        : const Icon(Icons.expand_more),
+                                    label: Text(provider.isLoadingMoreDrivers
+                                        ? (provider.isBengali ? 'লোড হচ্ছে...' : 'Loading...')
+                                        : (provider.isBengali ? 'আরও ৫০ জন দেখুন' : 'Load 50 more')),
+                                  ),
+                                ),
+                              ],
+
                               const SizedBox(height: 36),
                             ],
                           ),

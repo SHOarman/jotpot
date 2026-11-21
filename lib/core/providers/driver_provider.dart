@@ -1,4 +1,5 @@
-import 'dart:async';
+﻿import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import '../models/driver_model.dart';
@@ -14,6 +15,11 @@ import '../../utils/app_strings.dart';
 
 class DriverProvider extends ChangeNotifier {
   List<DriverModel> _drivers = [];
+  DocumentSnapshot<Map<String, dynamic>>? _driverCursor;
+  bool _hasMoreDrivers = true;
+  bool _isLoadingMoreDrivers = false;
+  bool get hasMoreDrivers => _hasMoreDrivers;
+  bool get isLoadingMoreDrivers => _isLoadingMoreDrivers;
   bool _isLoading = false;
   int _searchCycleCounter = 0;
 
@@ -85,25 +91,7 @@ class DriverProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    // 1. Listen to Real-time Firestore Active Drivers
-    _driverSubscription = FirebaseService.streamActiveDrivers().listen(
-      (firestoreDrivers) {
-        _drivers = firestoreDrivers;
-        _isLoading = false;
-        _hasError = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (err) {
-        debugPrint('Firestore drivers sync error: ${err.runtimeType}');
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage = _isBengali
-            ? 'তথ্য লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
-            : 'Failed to load data. Please try again.';
-        notifyListeners();
-      },
-    );
+    // Driver records load in pages on demand.
 
     // 2. Listen to Real-time Settings (settings/global)
     _settingsSubscription = FirebaseService.listenGlobalSettings().listen(
@@ -197,10 +185,10 @@ class DriverProvider extends ChangeNotifier {
       }
 
       // C. Re-fetch active drivers
-      final activeDrivers = await FirebaseService.fetchActiveDriversOnce();
-      if (activeDrivers.isNotEmpty) {
-        _drivers = activeDrivers;
-      }
+      _drivers.clear();
+      _driverCursor = null;
+      _hasMoreDrivers = true;
+      await loadMoreDrivers();
 
       // D. Sync remote geo hierarchy
       await GeoService.syncWithRemoteServer();
@@ -820,10 +808,35 @@ class DriverProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _drivers = HiveService.getAllDrivers();
+      _drivers = HiveService.getAllDrivers().take(FirebaseService.driverPageSize).toList();
     } catch (e) {
       debugPrint('Error loading drivers: $e');
     } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+    await loadMoreDrivers();
+  }
+
+  Future<void> loadMoreDrivers() async {
+    if (!_hasMoreDrivers || _isLoadingMoreDrivers || Firebase.apps.isEmpty) return;
+    _isLoadingMoreDrivers = true;
+    notifyListeners();
+    try {
+      final page = await FirebaseService.fetchActiveDriversPage(after: _driverCursor);
+      _driverCursor = page.cursor;
+      _hasMoreDrivers = page.hasMore;
+      final ids = _drivers.map((driver) => driver.id).toSet();
+      _drivers.addAll(page.drivers.where((driver) => !ids.contains(driver.id)));
+      for (final driver in page.drivers) {
+        await HiveService.addDriver(driver);
+      }
+      _hasError = false;
+    } catch (e) {
+      debugPrint('Error loading driver page: ${e.runtimeType}');
+      _hasError = _drivers.isEmpty;
+    } finally {
+      _isLoadingMoreDrivers = false;
       _isLoading = false;
       notifyListeners();
     }
@@ -860,6 +873,14 @@ class DriverProvider extends ChangeNotifier {
     _searchQuery = query;
     _searchCycleCounter++;
     notifyListeners();
+    if (query.trim().isNotEmpty) _loadUntilSearchMatch(query.trim());
+  }
+
+  Future<void> _loadUntilSearchMatch(String query) async {
+    while (_hasMoreDrivers && !_isLoadingMoreDrivers &&
+        _searchQuery.trim() == query && filteredDrivers.isEmpty) {
+      await loadMoreDrivers();
+    }
   }
 
   void setVehicleType(String? val) {

@@ -4,6 +4,7 @@ import '../models/driver_model.dart';
 import '../models/location_model.dart';
 
 class FirebaseService {
+  static const int driverPageSize = 50;
   static FirebaseFirestore? _cachedDb;
 
   static FirebaseFirestore get db {
@@ -391,6 +392,23 @@ class FirebaseService {
     } catch (_) {
       return [];
     }
+  }
+
+  /// Fetch one page so Home does not download the entire directory at startup.
+  static Future<({List<DriverModel> drivers, DocumentSnapshot<Map<String, dynamic>>? cursor, bool hasMore})>
+      fetchActiveDriversPage({DocumentSnapshot<Map<String, dynamic>>? after}) async {
+    if (Firebase.apps.isEmpty) return (drivers: <DriverModel>[], cursor: null, hasMore: false);
+    Query<Map<String, dynamic>> query = db.collection('drivers')
+        .where('isActive', isEqualTo: true)
+        .orderBy(FieldPath.documentId)
+        .limit(driverPageSize);
+    if (after != null) query = query.startAfterDocument(after);
+    final snap = await query.get();
+    return (
+      drivers: snap.docs.map((doc) => DriverModel.fromMap(doc.data(), id: doc.id)).toList(),
+      cursor: snap.docs.isEmpty ? after : snap.docs.last,
+      hasMore: snap.docs.length == driverPageSize,
+    );
   }
 
   /// One-time fetch of vehicle types
