@@ -34,7 +34,30 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- Web Initial Loading Screen with Car Icon -->
+  <div id="loading-splash" style="position: fixed; inset: 0; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <img src="splash_logo.png" alt="Jotpot Car" style="width: 140px; height: auto; margin-bottom: 18px; object-fit: contain; animation: jotpotPulse 1.8s infinite ease-in-out;" />
+    <div style="font-size: 36px; font-weight: 900; letter-spacing: 1.2px; margin-bottom: 6px;">
+      <span style="color: #000000;">JOT</span><span style="color: #FF6B00;">POT</span>
+    </div>
+    <div style="font-size: 15px; font-weight: 600; color: #64748B; margin-bottom: 32px; letter-spacing: 0.3px;">ভাড়ায় চালিত গাড়ির ডিরেক্টরি</div>
+    <div style="width: 38px; height: 38px; border: 3.5px solid #FFF2E8; border-top-color: #FF6B00; border-radius: 50%; animation: jotpotSpin 0.8s linear infinite;"></div>
+  </div>
+  <style>
+    @keyframes jotpotSpin { to { transform: rotate(360deg); } }
+    @keyframes jotpotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.92; } }
+  </style>
   <script>
+    // Remove loading splash once Flutter first frame is drawn
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('loading-splash');
+      if (splash) {
+        splash.style.transition = 'opacity 0.3s ease-out';
+        splash.style.opacity = '0';
+        setTimeout(function() { splash.remove(); }, 300);
+      }
+    });
+
     // Automatically purge old offline cache and service workers so all updates show immediately
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {

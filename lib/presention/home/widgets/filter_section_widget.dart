@@ -130,17 +130,6 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                             onChanged: (val) => provider.setUnion(val),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: FilterDropdown(
-                            label: strings.filterWard,
-                            hint: strings.filterWardHint,
-                            value: provider.selectedWard,
-                            items: provider.driverWardOptions,
-                            itemLabelBuilder: strings.wardNumberLabel,
-                            onChanged: provider.setWard,
-                          ),
-                        ),
                       ],
                     )
                   else ...[
@@ -204,35 +193,17 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Row 3: Union & Ward
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: FilterDropdown(
-                            label: strings.filterUnion,
-                            hint: provider.isLoadingUnions
-                                ? (provider.isBengali ? 'লোড হচ্ছে...' : 'Loading...')
-                                : strings.filterUnionHint,
-                            value: provider.selectedUnion,
-                            items: provider.unions,
-                            isEnabled: provider.selectedUpazila != null && !provider.isLoadingUnions,
-                            isLoading: provider.isLoadingUnions,
-                            onChanged: (val) => provider.setUnion(val),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilterDropdown(
-                            label: strings.filterWard,
-                            hint: strings.filterWardHint,
-                            value: provider.selectedWard,
-                            items: provider.driverWardOptions,
-                            itemLabelBuilder: strings.wardNumberLabel,
-                            onChanged: provider.setWard,
-                          ),
-                        ),
-                      ],
+                    // Row 3: Union / Municipality (includes child locations)
+                    FilterDropdown(
+                      label: strings.filterUnion,
+                      hint: provider.isLoadingUnions
+                          ? (provider.isBengali ? 'লোড হচ্ছে...' : 'Loading...')
+                          : strings.filterUnionHint,
+                      value: provider.selectedUnion,
+                      items: provider.unions,
+                      isEnabled: provider.selectedUpazila != null && !provider.isLoadingUnions,
+                      isLoading: provider.isLoadingUnions,
+                      onChanged: (val) => provider.setUnion(val),
                     ),
                   ],
 

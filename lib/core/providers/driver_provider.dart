@@ -325,7 +325,7 @@ class DriverProvider extends ChangeNotifier {
       if (lvl == 'division' || lvl == 'district' || lvl == 'upazila') return false;
 
       // 1. Check parentRef if present
-      if (loc.parentRef != null && loc.parentRef!.startsWith('upazila:')) {
+      if (loc.parentRef != null) {
         final parsed = LocationModel.parseParentRef(loc.parentRef);
         if (parsed != null) {
           final pDiv = parsed['division'] ?? '';

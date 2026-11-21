@@ -123,16 +123,29 @@ class HomeScreen extends StatelessWidget {
     BoxConstraints constraints,
   ) {
     if (provider.isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(48.0),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: CircularProgressIndicator(
-              strokeWidth: 4.0,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
-            ),
+          padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/splash_logo.png',
+                width: 100,
+                height: 65,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 16),
+              const SizedBox(
+                width: 36,
+                height: 36,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
+                ),
+              ),
+            ],
           ),
         ),
       );

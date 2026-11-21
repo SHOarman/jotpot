@@ -38,7 +38,7 @@ class FirebaseService {
       query = query.where('vehicleType', isEqualTo: vehicleType);
     }
 
-    return query.limit(50).snapshots().map((snapshot) {
+    return query.snapshots().map((snapshot) {
       return snapshot.docs
           .map((doc) {
             final data = doc.data() as Map<String, dynamic>;
@@ -384,7 +384,7 @@ class FirebaseService {
   static Future<List<DriverModel>> fetchActiveDriversOnce() async {
     if (Firebase.apps.isEmpty) return [];
     try {
-      final snap = await db.collection('drivers').where('isActive', isEqualTo: true).limit(50).get();
+      final snap = await db.collection('drivers').where('isActive', isEqualTo: true).get();
       return snap.docs
           .map((doc) => DriverModel.fromMap(doc.data(), id: doc.id))
           .toList();
