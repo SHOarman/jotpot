@@ -18,13 +18,17 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const HomeAppBar(),
-      floatingActionButton: const HomeChatFab(),
-      body: Consumer<DriverProvider>(
-        builder: (context, provider, _) {
-          return LayoutBuilder(
+    return Consumer<DriverProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
+          return _buildFullScreenLoading(provider);
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: const HomeAppBar(),
+          floatingActionButton: const HomeChatFab(),
+          body: LayoutBuilder(
             builder: (context, constraints) {
               final isWeb = constraints.maxWidth > 768;
 
@@ -132,8 +136,76 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             },
-          );
-        },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFullScreenLoading(DriverProvider provider) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/splash_logo.png',
+              width: 150,
+              height: 100,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 20),
+            const Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'JOT',
+                    style: TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF000000),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'POT',
+                    style: TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primaryOrange,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              provider.isBengali
+                  ? 'ভাড়ায় চালিত গাড়ির ডিরেক্টরি'
+                  : 'Rental Vehicle Directory',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textBody,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: 48),
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 4,
+                backgroundColor: Color(0xFFFFF2E8),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,35 +215,6 @@ class HomeScreen extends StatelessWidget {
     bool isWeb,
     BoxConstraints constraints,
   ) {
-    if (provider.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/splash_logo.png',
-                width: 100,
-                height: 65,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 16),
-              const SizedBox(
-                width: 36,
-                height: 36,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     if (provider.hasError && provider.drivers.isEmpty) {
       return Center(
         child: Padding(

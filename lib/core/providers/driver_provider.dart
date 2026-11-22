@@ -811,11 +811,14 @@ class DriverProvider extends ChangeNotifier {
       _drivers = HiveService.getAllDrivers().take(FirebaseService.driverPageSize).toList();
     } catch (e) {
       debugPrint('Error loading drivers: $e');
+    }
+
+    try {
+      await loadMoreDrivers();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-    await loadMoreDrivers();
   }
 
   Future<void> loadMoreDrivers() async {
@@ -837,7 +840,6 @@ class DriverProvider extends ChangeNotifier {
       _hasError = _drivers.isEmpty;
     } finally {
       _isLoadingMoreDrivers = false;
-      _isLoading = false;
       notifyListeners();
     }
   }

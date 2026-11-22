@@ -130,6 +130,20 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                             onChanged: (val) => provider.setUnion(val),
                           ),
                         ),
+                        const SizedBox(width: 8),
+
+                        // 6. Ward number (standard options 1–60)
+                        Expanded(
+                          child: FilterDropdown(
+                            label: strings.filterWard,
+                            hint: strings.filterWardHint,
+                            value: provider.selectedWard,
+                            items: provider.driverWardOptions,
+                            isEnabled: true,
+                            itemLabelBuilder: strings.wardNumberLabel,
+                            onChanged: provider.setWard,
+                          ),
+                        ),
                       ],
                     )
                   else ...[
@@ -204,6 +218,18 @@ class _FilterSectionWidgetState extends State<FilterSectionWidget> {
                       isEnabled: provider.selectedUpazila != null && !provider.isLoadingUnions,
                       isLoading: provider.isLoadingUnions,
                       onChanged: (val) => provider.setUnion(val),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Row 4: Ward number (standard options 1–60)
+                    FilterDropdown(
+                      label: strings.filterWard,
+                      hint: strings.filterWardHint,
+                      value: provider.selectedWard,
+                      items: provider.driverWardOptions,
+                      isEnabled: true,
+                      itemLabelBuilder: strings.wardNumberLabel,
+                      onChanged: provider.setWard,
                     ),
                   ],
 

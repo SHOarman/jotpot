@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/driver_provider.dart';
 import '../../core/route/app_routes.dart';
 import '../../utils/app_theme.dart';
 
@@ -18,7 +20,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToHome() async {
+    final provider = Provider.of<DriverProvider>(context, listen: false);
     await Future.delayed(const Duration(seconds: 2));
+    while (mounted) {
+      if (!provider.isLoading && !provider.isLoadingMoreDrivers) break;
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
     if (!mounted) return;
     Get.offNamed(AppRoutes.home);
   }

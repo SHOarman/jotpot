@@ -18,7 +18,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.home,
       page: () => const HomeScreen(),
-      transition: Transition.fadeIn,
+      transition: Transition.noTransition,
     ),
     GetPage(
       name: AppRoutes.registerDriver,
