@@ -40,7 +40,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions get android => FirebaseOptions(
     apiKey: _getEnv('FIREBASE_ANDROID_API_KEY', 'AIzaSyBQkvZUVkF5bf2cGcEO8qAxJNGqogy_ajQ'),
-    appId: _getEnv('FIREBASE_ANDROID_APP_ID', '1:687027102274:android:6b8f7c8cd9702ffe6083db'),
+    appId: _getEnv('FIREBASE_ANDROID_APP_ID', '1:687027102274:android:8b02afcf30b04b276083db'),
     messagingSenderId: _getEnv('FIREBASE_ANDROID_MESSAGING_SENDER_ID', '687027102274'),
     projectId: _getEnv('FIREBASE_ANDROID_PROJECT_ID', 'jotpot-d7e6b'),
     storageBucket: _getEnv('FIREBASE_ANDROID_STORAGE_BUCKET', 'jotpot-d7e6b.firebasestorage.app'),

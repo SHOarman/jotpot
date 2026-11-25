@@ -1,4 +1,4 @@
-package com.example.jotpot
+package com.jotpotapp.bd
 
 import io.flutter.embedding.android.FlutterActivity
 

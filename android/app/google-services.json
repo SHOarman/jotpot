@@ -33,6 +33,43 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:687027102274:android:8b02afcf30b04b276083db",
+        "android_client_info": {
+          "package_name": "com.jotpotapp.bd"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "687027102274-4lq9enf13lqrue00fkar3su3dgkmqqup.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jotpotapp.bd",
+            "certificate_hash": "82da16ce8e08721e1eaa149ec42291e12d121662"
+          }
+        },
+        {
+          "client_id": "687027102274-7l47pbe8so1b6bpa1nm12olovab3ibof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQkvZUVkF5bf2cGcEO8qAxJNGqogy_ajQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "687027102274-7l47pbe8so1b6bpa1nm12olovab3ibof.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
