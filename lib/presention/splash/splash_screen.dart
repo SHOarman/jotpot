@@ -19,6 +19,12 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToHome();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/images/splash_logo.png'), context);
+  }
+
   void _navigateToHome() async {
     final provider = Provider.of<DriverProvider>(context, listen: false);
     await Future.delayed(const Duration(seconds: 2));
@@ -46,6 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 150,
               height: 100,
               fit: BoxFit.contain,
+              gaplessPlayback: true,
             ),
             const SizedBox(height: 20),
 
